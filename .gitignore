@@ -30,3 +30,8 @@
 .idea
 .project
 .vscode
+
+# Build artifacts
+/dist/
+/dist-build/
+/.mongo-data/

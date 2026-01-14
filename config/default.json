@@ -4,7 +4,7 @@
   "dataRoot": "",
   "dbType": "mongoose",
   "dbHost": "127.0.0.1",
-  "dbPort": 27018,
+  "dbPort": 27017,
   "dbName": "adapt-tenant-master",
   "outputPlugin": "adapt",
   "auth": "local",
