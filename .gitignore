@@ -34,4 +34,13 @@
 # Build artifacts
 /dist/
 /dist-build/
+
+# MongoDB runtime data (should never be committed)
+.mongo-data/
 /.mongo-data/
+*.wt
+*.lock
+mongod.lock
+WiredTiger*
+diagnostic.data/
+journal/
