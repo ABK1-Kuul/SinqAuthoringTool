@@ -9,11 +9,12 @@
   width:100%;
   height:60px;
   z-index:500;
-  background-color: #2aa3ce;
-  background-position: right;
-  border-bottom:1px solid rgba(0,0,0,0.15);
+  background: linear-gradient(135deg, rgba(12, 13, 18, 0.96), rgba(10, 11, 16, 0.96)) padding-box,
+              linear-gradient(120deg, fade(@primary-color, 42%), fade(@secondary-color, 30%)) border-box;
+  border-bottom:1px solid @ui-surface-border;
   font-size: 15px;
   font-family: @font-title;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
 }
 
 .navigation-bg {
@@ -22,10 +23,9 @@
   position: absolute;
   top: 0;
   z-index: -1;
-  background:url("assets/top-bar-1080.jpg");
-  @media (min-width: 1920px) {
-    background:url("assets/top-bar-2560.jpg");
-  }
+  background: radial-gradient(ellipse at 15% 20%, fade(@primary-color, 18%), transparent 40%),
+              radial-gradient(ellipse at 80% 0%, fade(@secondary-color, 22%), transparent 35%),
+              rgba(255,255,255,0.02);
 }
 
 .navigation-inner {
@@ -40,6 +40,8 @@
   margin:0px;
   padding:0px 20px;
   color:@navigation-text-color;
+  border-radius: 8px;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
   .navigation-left & {
     float:left;
   }
@@ -63,10 +65,21 @@
 
   a {
     &:hover {
-    text-decoration: underline;
+    text-decoration: none;
       &.navigation-user-logout {
         text-decoration: none;
       }
     }
   }
+}
+.navigation-item:hover {
+  background: fade(@primary-color, 16%);
+  color: @navigation-hover-text-color;
+  transform: translateY(-1px);
+}
+
+.navigation-item.active {
+  background: fade(@primary-color, 22%);
+  color: #0b0c10;
+  font-weight: @font-weight-semibold;
 }

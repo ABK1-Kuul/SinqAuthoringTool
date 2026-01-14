@@ -3,7 +3,8 @@ var fs = require('fs');
 var request = require('supertest');
 var should = require('should');
 
-var origin = require('../');
+// Require backend app directly to avoid Electron main in tests
+var origin = require('../lib/application');
 var assetmanager = require('../lib/assetmanager');
 
 var testUser = require('./testData.json').testUser;

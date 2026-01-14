@@ -4,74 +4,75 @@
 // Colors
 /////////*/
 
-/*///////////
-// Default adapt variables. (please don't touch!) If you don't like us then comment us out and edit the colors below!
-/////////*/
-@adapt-primary-color:#34bee0; // light blue (used in most places such as buttons)
-@adapt-secondary-color:#00dd95; // green (used as a secondary button)
-@adapt-tertiary-color:#263944; // dark blue (used in sidebar)
-@adapt-quaternary-color:#36cde8; //
-@adapt-white:#fff;
-////////////
+// Core design tokens (modern dark theme per target system)
+@adapt-primary-color: #FF4500;        // Fox Red (primary actions)
+@adapt-secondary-color: #FFE973;      // Soft Yellow (accent)
+@adapt-tertiary-color: #0B0C10;       // Surface / sidebar
+@adapt-quaternary-color: #1E2330;     // Border / divider tone
+@adapt-white: #f2f2f2;                // Primary text (avoid pure white)
 
-/*///////////
-// Editable variables
-//
-// Changes you make here will pull through the whole of the Authoring Tool.
-/////////*/
-@primary-color:@adapt-primary-color;
-@secondary-color:@adapt-secondary-color;
-@tertiary-color:@adapt-tertiary-color;
-@quaternary-color:@adapt-quaternary-color;
-@white:@adapt-white;
-///////////
+// Editable variables propagated through the authoring UI
+@primary-color: @adapt-primary-color;
+@secondary-color: @adapt-secondary-color;
+@tertiary-color: @adapt-tertiary-color;
+@quaternary-color: @adapt-quaternary-color;
+@white: @adapt-white;
 
+// Surface + content backgrounds
+@ui-surface-100: #121317;   // main app background
+@ui-surface-200: #0B0C10;   // cards/panels
+@ui-surface-300: #151823;   // elevated surfaces
+@ui-surface-border: #1E2330; // subtle borders
+@border-color: @ui-surface-border;
+@surface-color: @ui-surface-200;
+@text-primary-color: @white;
+@text-muted-color: #A5A5A5;
+@text-secondary-color: #c8ccd6;
+@background-color: @ui-surface-100;
+@accent-color: @primary-color;
 
-@ui-content-header-color:#e0e8f7;
-@ui-content-color:#f3fcfe;
+@ui-content-header-color: @ui-surface-300;
+@ui-content-color: @ui-surface-100;
 
-@alert-color: #ff5567;
-@warning-color: #ffa08d;
-@info-color: fade(@primary-color, 60%);
-@success-color: @secondary-color;
+// Semantic states
+@alert-color: #f87171;      // alert red
+@warning-color: #fbbf24;    // amber
+@info-color: lighten(@primary-color, 8%);
+@success-color: #7ee0a3;    // keep a readable success hue
+@disabled-color: #4a5160;
 
-@disabled-color: #454545;
-
-/*///////////
 // Layout colors
-/////////*/
-
 @navigation-text-color: @white;
-@navigation-hover-text-color: darken(@navigation-text-color, 2%);
+@navigation-hover-text-color: lighten(@white, 6%);
 
 @sidebar-title-text-color: @white;
-@sidebar-color: @tertiary-color;
-@sidebar-text-color: @primary-color;
-@sidebar-item-hover-color: lighten(@tertiary-color, 10%);
+@sidebar-color: @ui-surface-200;
+@sidebar-text-color: #a6afbf;           // secondary text
+@sidebar-item-hover-color: lighten(@sidebar-color, 6%);
 @sidebar-item-hover-text-color: @white;
 @sidebar-input-text-color: @white;
-@sidebar-input-placeholder-color: #9fa8ad;
-@sidebar-input-color: #627178;
-@sidebar-input-border-color: lighten(@sidebar-input-color, 10%);
+@sidebar-input-placeholder-color: #6f7687;
+@sidebar-input-color: #161821;
+@sidebar-input-border-color: lighten(@sidebar-input-color, 8%);
 @sidebar-input-button-color: @sidebar-input-text-color;
 
-@location-title:#000;
-@location-background-color:@white;
+@location-title: #e6e8ed;
+@location-background-color: @ui-surface-200;
 
 @option-color: @primary-color;
-@option-hover-color: darken(@option-color, 10%);
-@option-selected-color: darken(@option-color, 20%);
+@option-hover-color: lighten(@option-color, 6%);
+@option-selected-color: darken(@option-color, 10%);
 
 /*///////////
 // Buttons
 /////////*/
 
 // Default button
-@button-hover-text-color:#000000;
+@button-hover-text-color:#0b1222;
 @button-hover-color:@white;
-@button-radius: 3px;
-@button-border:1px solid #000000;
-@button-hover-border: 1px solid #000000;
+@button-radius: 8px;
+@button-border:1px solid fade(@white, 16%);
+@button-hover-border: 1px solid fade(@white, 22%);
 
 @button-transparent:transparent;
 
@@ -79,8 +80,8 @@
 @button-primary-color:@primary-color;
 @button-primary-hover-color:darken(@primary-color, 5%);
 
-@button-primary-text-color:@white;
-@button-primary-hover-text-color:@white;
+@button-primary-text-color:#0b0c10;
+@button-primary-hover-text-color:#0b0c10;
 
 // Secondary button
 @button-secondary-color:@secondary-color;

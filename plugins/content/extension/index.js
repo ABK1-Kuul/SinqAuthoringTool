@@ -16,7 +16,7 @@ var configuration = require('../../../lib/configuration');
 var contentmanager = require('../../../lib/contentmanager');
 var helpers = require('../../../lib/helpers');
 var logger = require('../../../lib/logger');
-var origin = require('../../../');
+var origin = require('../../../lib/application');
 var rest = require('../../../lib/rest');
 var usermanager = require('../../../lib/usermanager');
 

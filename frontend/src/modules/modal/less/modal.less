@@ -6,16 +6,16 @@
 // Modal
 // ======
 
-@modal-color:#E9F0FA;
-@modal-text-color: @white;
+@modal-color: @surface-color;
+@modal-text-color: @text-primary-color;
 
-@modal-icon-color: @white;
-@modal-icon-hover-color:darken(@modal-color, 30%);
+@modal-icon-color: @text-primary-color;
+@modal-icon-hover-color: @accent-color;
 
-@modal-button-color: @white;
-@modal-button-hover-color:darken(@modal-color, 30%);
-@modal-button-text-color:#3eb4e4;
-@modal-button-text-hover-color: @white;
+@modal-button-color: @surface-color;
+@modal-button-hover-color: lighten(@surface-color, 5%);
+@modal-button-text-color: @primary-color;
+@modal-button-text-hover-color: @text-primary-color;
 
 @modal-popup-padding-top:10px;
 @modal-popup-padding-right:10px;
@@ -60,7 +60,7 @@
               color: @white;
             }
             &:disabled {
-                color:#666;
+                color: @text-muted-color;
             }
         }
     }
@@ -75,7 +75,7 @@
 
     .modal-popup-body {
         margin-top:10px;
-        color:#000;
+        color: @text-primary-color;
         &-inner {
             padding:10px;
         }

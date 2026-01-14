@@ -2,20 +2,26 @@
 
 html {
   overflow-y: hidden;
+  background-color: @ui-surface-100;
 }
 
 body {
-  background-color:@ui-content-color;
-  color: @tertiary-color;
+  background-color: @ui-surface-100;
+  color: #f2f2f2;
+  -webkit-font-smoothing: antialiased;
 }
 
 #app {
-	margin-top:60px;
-	margin-left:250px;
+  margin-top: 60px;
+  margin-left: 250px;
 }
 
 .app-inner {
-	position:relative;
+  position: relative;
+  background: @ui-surface-200;
+  min-height: calc(100vh - 60px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+  border-radius: 12px 0 0 0;
 }
 
 span.error {
@@ -33,18 +39,20 @@ span.error {
   position: fixed;
   top: 0;
   left: 0;
-  z-index: 5;
+  z-index: 5000;
   text-align: center;
-  opacity:1;
+  opacity: 1;
   transition: opacity 0.3s;
-  background-color: @ui-content-color;
+  background: radial-gradient(ellipse at 20% 20%, rgba(255, 69, 0, 0.12), transparent 45%),
+              radial-gradient(ellipse at 80% 0%, rgba(255, 233, 115, 0.12), transparent 35%),
+              @ui-surface-100;
 
   &.fade-out {
     opacity: 0;
   }
   &.cover-top-bar {
-    position:fixed;
-    z-index:50000;
+    position: fixed;
+    z-index: 50000;
   }
 
   .loading-inner {
@@ -55,6 +63,7 @@ span.error {
     margin-bottom: @loading-icon-size;
     img {
       height: 50px;
+      filter: drop-shadow(0 10px 25px rgba(255, 69, 0, 0.25));
     }
   }
 
@@ -65,7 +74,7 @@ span.error {
     > div {
       width: @loading-icon-size;
       height: @loading-icon-size;
-      background-color: @tertiary-color;
+      background-color: @primary-color;
       margin: 0 @loading-icon-size/3 0 @loading-icon-size/3;
 
       border-radius: 100%;

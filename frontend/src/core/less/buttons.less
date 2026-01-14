@@ -1,191 +1,198 @@
 @import 'colours';
 
 button {
-    border:none;
-    background:none;
-    padding:10px 12px;
+    border: none;
+    background: none;
+    padding: 10px 12px;
     &:hover, &:focus {
-        outline:none;
+        outline: none;
     }
 
     &.warning-color {
-        background:@button-warning-color!important;
-        color:@button-warning-text-color!important;
+        background: @button-warning-color!important;
+        color: @button-warning-text-color!important;
         &:hover {
-            background:@button-warning-hover-color!important;
-            color:@button-warning-hover-text-color!important; 
+            background: @button-warning-hover-color!important;
+            color: @button-warning-hover-text-color!important;
         }
     }
 
     &.alert-color {
-        background:@button-alert-color!important;
-        color:@button-alert-text-color!important;
+        background: @button-alert-color!important;
+        color: @button-alert-text-color!important;
         &:hover {
-            background:@button-alert-hover-color!important;
-            color:@button-alert-hover-text-color!important; 
+            background: @button-alert-hover-color!important;
+            color: @button-alert-hover-text-color!important;
         }
     }
 
     &.disabled-color {
-        background:@button-disabled-color!important;
-        color:@button-disabled-text-color!important;
+        background: @button-disabled-color!important;
+        color: @button-disabled-text-color!important;
         &:hover {
-            background:@button-disabled-color!important;
-            color:@button-disabled-text-color!important; 
+            background: @button-disabled-color!important;
+            color: @button-disabled-text-color!important;
         }
     }
     &:disabled {
         cursor: auto;
-        border-color:@button-disabled-color!important;
-        background:@button-disabled-color!important;
-        color:@button-disabled-text-color!important;
+        border-color: @button-disabled-color!important;
+        background: @button-disabled-color!important;
+        color: @button-disabled-text-color!important;
         &:hover {
-            background:@button-disabled-color!important;
-            color:@button-disabled-text-color!important; 
+            background: @button-disabled-color!important;
+            color: @button-disabled-text-color!important;
         }
     }
 }
 
 .btn {
-    display:inline-block;
-    padding:10px 12px;
-    background:none;
-    border:@button-border;
-    border-radius:@button-radius;
-    font-weight: @font-weight-bold;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 14px;
+    background: linear-gradient(135deg, fade(@button-primary-color, 96%), fade(@button-primary-color, 86%));
+    border: @button-border;
+    border-radius: 8px;
+    font-weight: @font-weight-semibold;
+    letter-spacing: 0.01em;
     text-decoration: none;
-    transition:all 0.3s;
+    transition: all 0.2s ease;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.28);
 
     &:hover, &:focus {
-        outline:none;
-        color:@button-hover-text-color;
-        border:@button-hover-border;
+        outline: none;
+        color: @button-hover-text-color;
+        border: @button-hover-border;
+        box-shadow: 0 16px 38px rgba(0,0,0,0.35);
+        transform: translateY(-1px);
     }
 }
 
 .primary {
-    background-color:@button-primary-color;
-    color:@button-primary-text-color;
-    border-color: @button-primary-color;
+    background: linear-gradient(135deg, lighten(@button-primary-color, 2%), darken(@button-primary-color, 4%));
+    color: #0b0c10;
+    border-color: darken(@button-primary-color, 8%);
     i {
-        color:@button-primary-text-color;
+        color: #0b0c10;
         &:hover, &:focus {
-            color:@button-primary-hover-text-color;
+            color: #0b0c10;
         }
     }
     &:hover, &:focus {
-        background-color:@button-primary-hover-color;
-        color:@button-primary-hover-text-color;
-        border-color:@button-primary-hover-color;
+        background: linear-gradient(135deg, lighten(@button-primary-hover-color, 6%), @button-primary-hover-color);
+        color: #0b0c10;
+        border-color: darken(@button-primary-hover-color, 10%);
     }
 }
 
-.primary-hollow { 
-    background-color:@button-transparent;
+.primary-hollow {
+    background-color: transparent;
     color: @button-primary-color;
-    border-color:@button-primary-color;
+    border-color: fade(@button-primary-color, 60%);
     i {
-        color:@button-primary-text-color;
+        color: @button-primary-text-color;
         &:hover, &:focus {
-            color:@button-primary-hover-text-color;
+            color: @button-primary-hover-text-color;
         }
     }
     &:hover, &:focus {
         color: @button-primary-text-color;
-        background-color: @button-primary-color;
-        border-color:@button-primary-color;
-    }        
+        background-color: fade(@button-primary-color, 12%);
+        border-color: @button-primary-color;
+    }
 }
 
 .secondary {
-    background-color:@button-secondary-color;
-    color:@button-secondary-text-color;
-    border-color:@button-secondary-color;
+    background: transparent;
+    color: @button-secondary-color;
+    border-color: fade(@button-secondary-color, 50%);
     i {
-        color:@button-secondary-text-color;
+        color: @button-secondary-color;
         &:hover, &:focus {
-            color:@button-secondary-hover-text-color;
+            color: @button-secondary-hover-text-color;
         }
     }
     &:hover, &:focus {
-        background-color:@button-secondary-hover-color;
-        color:@button-secondary-hover-text-color;
-        border-color:@button-secondary-hover-color;
+        background: fade(@button-secondary-color, 14%);
+        color: @button-secondary-hover-text-color;
+        border-color: fade(@button-secondary-color, 70%);
     }
 }
 
-.secondary-hollow { 
-    background-color:@button-transparent;
+.secondary-hollow {
+    background-color: transparent;
     color: @button-secondary-color;
-    border-color:@button-secondary-color;
+    border-color: fade(@button-secondary-color, 60%);
     i {
-        color:@button-secondary-text-color;
+        color: @button-secondary-text-color;
         &:hover, &:focus {
-            color:@button-secondary-hover-text-color;
+            color: @button-secondary-hover-text-color;
         }
     }
     &:hover, &:focus {
         color: @button-secondary-text-color;
-        background-color: @button-secondary-color;
-        border-color:@button-secondary-color;
-    }        
+        background-color: fade(@button-secondary-color, 12%);
+        border-color: @button-secondary-color;
+    }
 }
 
 .tertiary {
-    background-color:@button-tertiary-color;
-    color:@button-tertiary-text-color;
-    border-color:@button-tertiary-color;
+    background: linear-gradient(135deg, lighten(@button-tertiary-color, 5%), @button-tertiary-color);
+    color: @button-tertiary-text-color;
+    border-color: fade(@button-tertiary-color, 45%);
     i {
-        color:@button-tertiary-text-color;
+        color: @button-tertiary-text-color;
         &:hover, &:focus {
-            color:@button-tertiary-hover-text-color;
+            color: @button-tertiary-hover-text-color;
         }
     }
     &:hover, &:focus {
-        background-color:@button-tertiary-hover-color;
-        color:@button-tertiary-hover-text-color;
-        border-color:@button-tertiary-hover-color;
+        background: linear-gradient(135deg, lighten(@button-tertiary-hover-color, 4%), @button-tertiary-hover-color);
+        color: @button-tertiary-hover-text-color;
+        border-color: darken(@button-tertiary-hover-color, 6%);
     }
 }
 
-.tertiary-hollow { 
-    background-color:@button-transparent;
-    color:@button-tertiary-color;
-    border-color:@button-tertiary-color;
+.tertiary-hollow {
+    background-color: transparent;
+    color: @button-tertiary-color;
+    border-color: fade(@button-tertiary-color, 60%);
     i {
-        color:@button-tertiary-text-color;
+        color: @button-tertiary-text-color;
         &:hover, &:focus {
             color:@button-tertiary-hover-text-color;
         }
     }
     &:hover, &:focus {
         color: @button-tertiary-text-color;
-        background-color: @button-tertiary-color;
-        border-color:@button-tertiary-color;
-    }        
-}    
-
-.quaternary {
-    background-color:@button-quaternary-color;
-    color:@button-quaternary-text-color;
-    border-color:@button-quaternary-color;
-    i {
-        color:@button-quaternary-text-color;
-        &:hover, &:focus {
-            color:@button-quaternary-hover-text-color;
-        }
-    }
-    &:hover, &:focus {
-        background-color:@button-quaternary-hover-color;
-        color:@button-quaternary-hover-text-color;
-        border-color:@button-quaternary-hover-color;
+        background-color: fade(@button-tertiary-color, 12%);
+        border-color: @button-tertiary-color;
     }
 }
 
-.quaternary-hollow { 
-    background-color:@button-transparent;
-    color:@button-quaternary-color;
-    border-color:@button-quaternary-color;
+.quaternary {
+    background: linear-gradient(135deg, lighten(@button-quaternary-color, 5%), darken(@button-quaternary-color, 2%));
+    color: @button-quaternary-text-color;
+    border-color: fade(@button-quaternary-color, 50%);
+    i {
+        color: @button-quaternary-text-color;
+        &:hover, &:focus {
+            color:@button-quaternary-hover-text-color;
+        }
+    }
+    &:hover, &:focus {
+        background: linear-gradient(135deg, lighten(@button-quaternary-hover-color, 6%), @button-quaternary-hover-color);
+        color:@button-quaternary-hover-text-color;
+        border-color: darken(@button-quaternary-hover-color, 6%);
+    }
+}
+
+.quaternary-hollow {
+    background-color: transparent;
+    color: @button-quaternary-color;
+    border-color: fade(@button-quaternary-color, 60%);
     i {
         color:@button-quaternary-text-color;
         &:hover, &:focus {
@@ -194,18 +201,18 @@ button {
     }
     &:hover, &:focus {
         color:@button-quaternary-text-color;
-        background-color:@button-quaternary-color;
+        background-color: fade(@button-quaternary-color, 12%);
         border-color:@button-quaternary-color;
-    }        
+    }
 }
 
 .white-hollow {
-    background-color:@button-transparent;
-    color:@button-white-hollow-text-color;
-    border-color:@button-white-hollow-text-color;
+    background-color: transparent;
+    color: @button-white-hollow-text-color;
+    border-color: fade(@button-white-hollow-text-color, 60%);
     &:hover, &:focus {
         color:@button-white-hollow-hover-text-color;
-        background-color:@button-white-hollow-hover-color;
+        background-color: fade(@button-white-hollow-hover-color, 10%);
         border-color:@button-white-hollow-hover-color;
     }
 }

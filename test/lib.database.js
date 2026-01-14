@@ -2,7 +2,8 @@ var mongoose = require('mongoose');
 var should = require('should');
 
 var testData = require('./testData.json').database;
-var origin = require('../');
+// Require backend app directly to avoid Electron main in tests
+var origin = require('../lib/application');
 
 var app = origin();
 

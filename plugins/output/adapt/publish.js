@@ -11,7 +11,7 @@ const Constants = require('../../../lib/outputmanager').Constants;
 const helpers = require('../../../lib/helpers');
 const installHelpers = require('../../../lib/installHelpers');
 const logger = require('../../../lib/logger');
-const origin = require('../../../');
+const origin = require('../../../lib/application');
 const outputHelpers = require('./outputHelpers');
 const usermanager = require('../../../lib/usermanager');
 

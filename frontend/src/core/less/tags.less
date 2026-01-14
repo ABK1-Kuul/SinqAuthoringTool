@@ -1,8 +1,8 @@
 @import 'colours';
 
 div.tagsinput {
-  border:1px solid #CCC;
-  background: @white;
+  border:1px solid @border-color;
+  background: @surface-color;
   padding:5px;
   overflow-y: auto;
   border-radius: @button-radius;
@@ -33,7 +33,7 @@ div.tagsinput {
     border:1px solid transparent;
     padding:5px;
     background: transparent;
-    color: #000;
+    color: @text-primary-color;
     outline:0px;
     margin-right:5px;
     margin-bottom:5px;
@@ -61,9 +61,9 @@ div.tagsinput {
   padding: 4px 0 4px 0;
   margin: 2px 0 0 0;
   list-style: none;
-  background-color: @white;
-  border-color: #ccc;
-  border-color: rgba(0, 0, 0, 0.2);
+  background-color: @surface-color;
+  border-color: @border-color;
+  border-color: fade(@text-primary-color, 20%);
   border-style: solid;
   border-width: 1px;
   -webkit-border-radius: 5px;
@@ -188,7 +188,7 @@ div.tagsinput {
 .ui-state-focus,
 .ui-widget-content .ui-state-focus,
 .ui-widget-header .ui-state-focus {
-  background: #15a4fa;
+  background: @primary-color;
   font-weight: @font-weight-bold;
-  color: @white;
+  color: @text-primary-color;
 }

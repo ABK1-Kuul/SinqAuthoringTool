@@ -3,7 +3,8 @@ var fs = require('fs-extra');
 var path = require('path');
 var mongodb = require('mongodb');
 
-var origin = require('../');
+// Require the backend application directly to avoid invoking the Electron main process during tests
+var origin = require('../lib/application');
 var auth = require('../lib/auth');
 var installHelpers = require('../lib/installHelpers');
 var logger = require('../lib/logger');
@@ -28,12 +29,19 @@ before(function(done) {
     createCacheData,
     function startApp(cb) {
       logger.level('console','error'); // only show errors
+      // Skip external dependency checks (e.g. GitHub) during test runs
+      if (!process.argv.includes('--skipDependencyCheck')) {
+        process.argv.push('--skipDependencyCheck');
+      }
       app.use({ configFile: path.join('test', 'testConfig.json') });
       app.once('modulesReady', function() {
         app.configuration.setConfig('masterTenantID', testData.testTenant._id);
       });
       app.on('serverStarted', function(server) {
-        cb();
+        // Ensure default roles exist before tests assign them
+        app.rolemanager.installDefaultRoles(function(err) {
+          cb(err);
+        });
       });
       app.run({ skipVersionCheck: true });
     },
@@ -111,7 +119,6 @@ function removeTestData(done) {
       var MongoClient = mongodb.MongoClient;
       var connStr = 'mongodb://' + testConfig.dbHost + ':' + testConfig.dbPort + '/' + testConfig.dbName;
       MongoClient.connect(connStr, {
-        domainsEnabled: true,
         useNewUrlParser: true,
         useUnifiedTopology: true
       }, function(error, client) {

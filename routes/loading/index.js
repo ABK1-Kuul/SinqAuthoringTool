@@ -1,7 +1,7 @@
 var configuration = require('../../lib/configuration');
 var express = require('express');
 var server = module.exports = express();
-var origin = require('../../');
+var origin = require('../../lib/application');
 var app = origin();
 
 server.set('views', __dirname);

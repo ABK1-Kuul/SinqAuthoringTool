@@ -8,7 +8,7 @@
  * and extended by the various bower content plugins (components, extensions, themes, menus)
  */
 
-var origin = require('../../../'),
+var origin = require('../../../lib/application'),
     contentmanager = require('../../../lib/contentmanager'),
     usermanager = require('../../../lib/usermanager'),
     rest = require('../../../lib/rest'),

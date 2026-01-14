@@ -10,8 +10,9 @@
   height: calc(~"100vh - 61px");
   overflow-y: auto;
   overflow-x: hidden;
-  background-color: @sidebar-color;
+  background: linear-gradient(180deg, lighten(@sidebar-color, 2%), @sidebar-color);
   color: @sidebar-text-color;
+  box-shadow: 8px 0 30px rgba(0,0,0,0.35);
 
   button {
     &[class^="action-"],
@@ -64,7 +65,7 @@
         margin: 0 25px;
         list-style: none;
         padding: 1px 0;
-        background-color: @sidebar-color;
+        background-color: darken(@sidebar-color, 4%);
 
          li {
           padding: 0;
@@ -74,14 +75,14 @@
             height: 50px;
             font-size: 15px;
             width: 100%;
-            border-radius: 5px;
-            color: @white;
-            border-color: @button-secondary-color;
+            border-radius: 8px;
+            color: #0b0c10;
+            border-color: fade(@button-secondary-color, 65%);
             background-color: @button-secondary-color;
             position: absolute;
             z-index: 1;
             &:hover {
-              border-color: @button-secondary-hover-color;
+              border-color: fade(@button-secondary-hover-color, 80%);
               background-color: @button-secondary-hover-color;
             }
           }
@@ -92,8 +93,8 @@
           display: block;
         }
         > button {
-          border-color: @button-secondary-hover-color;
-          background-color: @button-secondary-hover-color;
+          border-color: lighten(@button-secondary-hover-color, 3%);
+          background-color: lighten(@button-secondary-hover-color, 3%);
         }
       }
     }
@@ -105,7 +106,7 @@
     transition:all 0.3s;
     &:hover,
     &:focus {
-      color:darken(@sidebar-text-color, 10%);
+      color:@primary-color;
     }
   }
   .sidebar-filter-clear {
@@ -133,7 +134,7 @@
       color:@sidebar-text-color;
       transition:all 0.3s;
       &:hover {
-        color:@sidebar-item-hover-text-color;
+        color:@primary-color;
       }
     }
   }
@@ -218,6 +219,12 @@
       }
     }
   }
+  &.active button {
+    color: @primary-color;
+    font-weight: @font-weight-semibold;
+    background: fade(@primary-color, 10%);
+    border-radius: 8px;
+  }
 }
 
 .sidebar-row-input {
@@ -258,7 +265,7 @@
 }
 
 .sidebar-item-title {
-  background-color:@sidebar-color;
+  background: linear-gradient(135deg, fade(@primary-color, 12%), fade(@sidebar-color, 88%));
   color:@sidebar-title-text-color;
   text-align:center;
 }
@@ -270,7 +277,7 @@
 }
 
 .sidebar-divide {
-  background-color:@sidebar-color;
+  background-color: lighten(@sidebar-color, 2%);
   text-align:center;
 
   h3 {

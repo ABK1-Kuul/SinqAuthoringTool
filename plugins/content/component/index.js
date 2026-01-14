@@ -4,7 +4,7 @@
  *
  */
 
-var origin = require('../../../'),
+var origin = require('../../../lib/application'),
     contentmanager = require('../../../lib/contentmanager'),
     rest = require('../../../lib/rest'),
     BowerPlugin = require('../bower'),

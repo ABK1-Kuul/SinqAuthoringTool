@@ -7,7 +7,7 @@ var ContentPlugin = require('../../../lib/contentmanager').ContentPlugin,
     configuration = require('../../../lib/configuration'),
     database = require('../../../lib/database'),
     logger = require('../../../lib/logger'),
-    origin = require('../../../'),
+    origin = require('../../../lib/application'),
     util = require('util'),
     path = require('path');
 

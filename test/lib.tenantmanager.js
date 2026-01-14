@@ -1,6 +1,7 @@
 var should = require('should');
 
-var origin = require('../');
+// Require backend app directly to avoid Electron main in tests
+var origin = require('../lib/application');
 var configuration = require('../lib/configuration');
 var path = require('path');
 var tenantmanager = require('../lib/tenantmanager.js');

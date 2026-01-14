@@ -1,7 +1,8 @@
 var request = require('supertest');
 var should = require('should');
 
-var origin = require('../');
+// Require backend app directly to avoid Electron main in tests
+var origin = require('../lib/application');
 var logger = require('../lib/logger');
 var permissions = require('../lib/permissions');
 var rest = require('../lib/rest');

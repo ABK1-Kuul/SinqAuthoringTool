@@ -2,7 +2,8 @@ var async = require('async');
 var should = require('should');
 var request = require('supertest');
 
-var origin = require('../');
+// Require backend app directly to avoid Electron main in tests
+var origin = require('../lib/application');
 var auth = require('../lib/auth');
 var usermanager = require('../lib/usermanager');
 

@@ -1,17 +1,19 @@
 @import 'colours';
 
 .tb-title {
-    background-color: #9cabc4;
+    background-color: @ui-surface-300;
     color: @white;
     text-align: center;
-    border-bottom: 1px gray solid;
+    border-bottom: 1px solid rgba(148,163,184,0.25);
     padding: 24px 30px!important;
-    border-top: 1px solid gray;
+    border-top: 1px solid rgba(148,163,184,0.15);
 }
 
 .tb-row {
   padding:20px 30px;
-  border-bottom: 1px solid #efefef;
+  border-bottom: 1px solid rgba(148,163,184,0.12);
+  background: @ui-surface-200;
+  color: #e2e8f0;
 
   .tb-col-inner {
     padding-right:10px;

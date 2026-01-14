@@ -1,0 +1,21 @@
+{
+  "serverPort": 3000,
+  "serverName": "localhost",
+  "dataRoot": "",
+  "dbType": "mongoose",
+  "dbHost": "127.0.0.1",
+  "dbPort": 27018,
+  "dbName": "adapt-tenant-master",
+  "outputPlugin": "adapt",
+  "auth": "local",
+  "installed": false,
+  "masterTenant": {
+    "name": "master",
+    "displayName": "Master"
+  },
+  "admin": {
+    "email": "",
+    "password": ""
+  }
+}
+

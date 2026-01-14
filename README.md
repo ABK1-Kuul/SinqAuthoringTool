@@ -1,39 +1,236 @@
-# Adapt Authoring Tool
+# SINQ Authoring Tool
 
-Adapt is a free and easy to use framework and authoring tool that creates fully responsive, multi-device, HTML5 e-learning content.
+<div align="center">
 
-## What Does It Do?
+**A Portable Desktop Application for eLearning Course Authoring**
 
-The Adapt authoring tool is a web-based user interface for the [Adapt Framework](https://github.com/adaptlearning/adapt_framework). Use it to create responsive, single-version HTML5 e-learning courses for delivery on a web server or SCORM-compliant learning management system.
+Built on top of [Adapt Authoring Tool](https://github.com/adaptlearning/adapt_authoring) | Powered by [Adapt Framework](https://github.com/adaptlearning/adapt_framework)
 
-Interested? [See what Adapt can do.](https://community.adaptlearning.org/demo2/index.html)
+[![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Platform: Windows](https://img.shields.io/badge/Platform-Windows-lightgrey.svg)](https://www.microsoft.com/windows)
+[![Electron](https://img.shields.io/badge/Electron-24.8.6-47848F.svg)](https://www.electronjs.org/)
 
-## Features
+</div>
 
-* Web application built on Node.js, Backbone.js, and MongoDB for creating, editing and publishing Adapt content
-* Supports all core extensions and components
-* Allows uploading and linking of course assets
+---
 
-## Full Documentation
-[Visit the wiki](https://github.com/adaptlearning/adapt_authoring/wiki) for full documentation, including [installation](https://github.com/adaptlearning/adapt_authoring/wiki/Installing-the-Authoring-Tool), course authoring, developer guides, and other information.
+## 🎯 Overview
 
-## Communication
-+ [Twitter: @AdaptLearning](https://twitter.com/adaptlearning)
-+ [Gitter](https://gitter.im/orgs/adaptlearning/rooms)
-+ [Community Site](https://community.adaptlearning.org/)
-+ [Technical Forum](https://community.adaptlearning.org/mod/forum/view.php?id=4)
-+ [Bugs / Feature Requests](https://github.com/adaptlearning/adapt_authoring/issues)
-+ [Responsive e-Learning Forum](https://community.adaptlearning.org/mod/forum/view.php?id=56)
+**SINQ Authoring Tool** is a standalone, portable desktop application that brings the power of Adapt Framework course authoring to your Windows PC. No server setup, no database installation, no command-line configuration—everything runs locally with a beautiful GUI setup wizard.
 
-## Contributing to Adapt
+This project transforms the web-based Adapt Authoring Tool into a true desktop application, making eLearning course creation accessible to non-technical users while maintaining all the powerful features of the original Adapt ecosystem.
 
-See [Contributing to the Adapt authoring tool](https://github.com/adaptlearning/adapt_authoring/blob/master/CONTRIBUTING.md).
+## ✨ Key Features
 
+### 🖥️ **True Desktop Application**
+- Runs entirely within Electron—no browser required
+- Native Windows application experience
+- Single executable, fully portable
+- No external dependencies or installations needed
 
-## Troubleshooting, Bugs, and Feedback
-+ For help with troubleshooting, visit the [Technical Discussion Forum](https://community.adaptlearning.org/mod/forum/view.php?id=4).
-+ To report a bug, please [GitHub Issues](https://github.com/adaptlearning/adapt_authoring/issues).
-+ To provide feedback, please use the [GitHub Issues](https://github.com/adaptlearning/adapt_authoring/issues).
+### 🗄️ **Embedded Services**
+- **MongoDB** bundled and managed automatically
+- **Backend server** runs invisibly in the background
+- All data stored locally in the application folder
+- Fully offline-capable after initial setup
 
-## License
-<a href="https://community.adaptlearning.org/" target="_blank"><img src="https://github.com/adaptlearning/documentation/blob/master/04_wiki_assets/plug-ins/images/adapt-logo-mrgn-lft.jpg" alt="adapt learning logo" align="right"></a>  Adapt is licensed under the [GNU General Public License, Version 3](https://github.com/adaptlearning/adapt_authoring/blob/master/LICENSE).
+### 🎨 **User-Friendly Setup**
+- **Multi-page GUI wizard** guides you through setup
+- **Auto-filled defaults** for quick configuration
+- **SMTP testing** built-in for email notifications
+- **Progress tracking** with friendly status messages
+- **No CLI knowledge required**
+
+### 🔒 **Security & Privacy**
+- **Encrypted SMTP credentials** stored securely
+- **Local data storage**—your courses stay on your machine
+- **Context isolation** and secure IPC communication
+- **Production-ready** security hardening
+
+### 📦 **Portable & Self-Contained**
+- Everything bundled in one folder
+- No registry entries or system modifications
+- Easy to backup, move, or deploy
+- Perfect for organizations with strict IT policies
+
+## 🚀 Quick Start
+
+### For End Users
+
+1. **Download** the portable Windows executable
+2. **Run** the application
+3. **Follow** the setup wizard (takes ~5 minutes)
+4. **Start creating** your eLearning courses!
+
+### Setup Wizard Flow
+
+1. **Welcome** - Overview of required information
+2. **Core Configuration** - Tenant and admin account setup
+3. **SMTP (Optional)** - Email notification configuration
+4. **Review & Confirm** - Verify your settings
+5. **Installation** - Automatic setup with progress tracking
+6. **Finish** - Launch and start authoring!
+
+### System Requirements
+
+- **OS**: Windows 10/11 (64-bit)
+- **RAM**: 4GB minimum (8GB recommended)
+- **Disk Space**: 500MB for application + space for courses
+- **Internet**: Required only for initial framework download
+
+## 📋 What You'll Need
+
+### Required (Always Manual)
+- Tenant unique name (lowercase, alphanumeric)
+- Tenant display name
+- Admin email address
+- Admin password
+
+### Optional
+- SMTP configuration for email notifications
+  - SMTP host, port, username, password
+  - Sender email address
+
+### Auto-Configured (Editable)
+- MongoDB host: `localhost`
+- MongoDB port: `27017`
+- Database authentication: Disabled
+- Framework repository: Stable Adapt Framework
+- Data directory: Local app folder
+
+## 🏗️ Architecture
+
+```
+SINQ Authoring Tool
+├── Electron Main Process
+│   ├── MongoDB Service (Embedded)
+│   ├── Backend Service (Node.js)
+│   ├── Configuration Management
+│   └── Window Management
+├── Electron Renderer
+│   ├── Setup Wizard UI
+│   └── Adapt Authoring Tool UI
+└── Data Storage
+    ├── MongoDB Data
+    ├── Course Files
+    └── Configuration
+```
+
+## 🛠️ Development
+
+### Prerequisites
+
+- Node.js 16.x or 18.x
+- Git
+- Windows 10/11
+
+### Setup
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd adapt_authoring-1
+
+# Install dependencies
+npm install
+
+# Build frontend
+npm run build:frontend
+
+# Run in development mode
+npm run dev
+```
+
+### Building
+
+```bash
+# Build portable Windows executable
+npm run build:electron:win
+```
+
+The output will be in the `dist` folder.
+
+## 📁 Project Structure
+
+```
+adapt_authoring-1/
+├── electron/              # Electron application code
+│   ├── main.js           # Main process entry point
+│   ├── preload.js        # Secure IPC bridge
+│   ├── services/         # Service modules
+│   │   ├── mongodb.js    # MongoDB management
+│   │   ├── backend.js    # Backend service
+│   │   ├── installation.js # Setup wizard logic
+│   │   └── encryption.js # SMTP password encryption
+│   └── wizard/           # Setup wizard UI
+│       └── index.html    # Multi-page wizard
+├── lib/                  # Backend libraries
+├── frontend/             # Adapt Authoring Tool UI
+├── resources/            # Bundled resources
+│   └── mongodb/          # MongoDB binaries
+└── scripts/              # Utility scripts
+```
+
+## 🔧 Configuration
+
+Configuration is stored in:
+- **Windows**: `%APPDATA%\SINQ_authoring\config\config.json`
+- **Development**: `userData\config\config.json`
+
+The configuration file includes:
+- Database settings
+- Tenant information
+- Admin credentials (password not stored)
+- SMTP settings (encrypted)
+- Framework version
+
+## 🐛 Troubleshooting
+
+### MongoDB Won't Start
+- Check if port 27017 is already in use
+- Ensure MongoDB binaries exist in `resources/mongodb/bin/`
+- Check logs in `userData/mongodb/mongod.log`
+
+### Backend Connection Errors
+- Verify MongoDB is running on port 27017
+- Check backend logs in the console
+- Ensure configuration file exists and is valid
+
+### Framework Not Found
+- Run the framework installation script:
+  ```bash
+  node scripts/get-framework-simple.js <tenant-id>
+  ```
+- Or re-run the setup wizard
+
+## 📝 License
+
+This project is licensed under the [GNU General Public License v3.0](LICENSE).
+
+SINQ Authoring Tool is built on top of:
+- [Adapt Authoring Tool](https://github.com/adaptlearning/adapt_authoring) - GPL-3.0
+- [Adapt Framework](https://github.com/adaptlearning/adapt_framework) - GPL-3.0
+
+## 🙏 Acknowledgments
+
+- **Adapt Learning** - For the excellent Adapt Framework and Authoring Tool
+- **Electron** - For enabling cross-platform desktop applications
+- **MongoDB** - For the embedded database solution
+
+## 📞 Support & Contact
+
+⚠️ **Preview Repository Notice**
+
+This repository provides a preview of the project's capabilities. 
+
+**For the full end-to-end solution and dedicated support, please contact the developer.**
+
+---
+
+<div align="center">
+
+**Built with ❤️ for the eLearning community**
+
+[Report Issue](https://github.com/your-repo/issues) · [Request Feature](https://github.com/your-repo/issues) · [View Documentation](https://github.com/adaptlearning/adapt_authoring/wiki)
+
+</div>

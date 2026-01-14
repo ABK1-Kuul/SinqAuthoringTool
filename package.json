@@ -1,8 +1,9 @@
 {
-  "name": "adapt_authoring",
+  "name": "SINQ_authoring",
   "version": "0.11.5",
   "license": "GPL-3.0",
-  "description": "A server-based user interface for authoring eLearning courses using the Adapt Framework.",
+  "author": "Abdselam Kedir",
+  "description": "A server-based user interface for authoring eLearning courses using the Adapt Framework. SINQ Authoring Tool.",
   "keywords": [
     "adapt",
     "authoring"
@@ -11,13 +12,21 @@
     "type": "git",
     "url": "https://github.com/adaptlearning/adapt_authoring.git"
   },
-  "main": "index",
+  "main": "electron/main.js",
   "engines": {
     "node": "16 || 18"
   },
   "scripts": {
     "test": "grunt test",
-    "create-migration": "npx migrate-mongo create -f conf/migrations.js"
+    "create-migration": "npx migrate-mongo create -f conf/migrations.js",
+    "build:frontend": "grunt build:prod",
+    "build:frontend:dev": "grunt build:dev",
+    "electron": "electron .",
+    "electron:dev": "electron . --dev",
+    "dev": "set MONGO_DB_DIR=%TEMP%\\sinq-mongo-dev&& npm run build:frontend:dev && electron .",
+    "start": "electron .",
+    "verify:packaged": "node scripts/verify-packaged-modules.js",
+    "build:electron:win": "npm run build:frontend && electron-builder --win nsis && npm run verify:packaged"
   },
   "dependencies": {
     "@babel/core": "^7.19.6",
@@ -27,9 +36,12 @@
     "bcrypt-nodejs": "0.0.3",
     "body-parser": "^1.20.1",
     "bower": "^1.8.14",
+    "bower-config": "^1.4.3",
+    "bower-logger": "^0.2.2",
     "bytes": "^3.1.2",
     "chalk": "^2.4.2",
     "compression": "^1.7.4",
+    "configstore": "^3.1.2",
     "connect-mongodb-session": "^2.4.1",
     "consolidate": "^0.15.1",
     "cookie-parser": "^1.4.6",
@@ -67,6 +79,7 @@
     "mongodb-uri": "^0.9.7",
     "mongoose": "^5.8.13",
     "morgan": "^1.10.0",
+    "mout": "^1.2.4",
     "multer": "^1.4.4",
     "needle": "^2.9.1",
     "node-polyglot": "^2.4.2",
@@ -74,6 +87,7 @@
     "optimist": "^0.6.1",
     "passport": "^0.6.0",
     "passport-local": "^1.0.0",
+    "q": "^1.5.1",
     "request": "^2.88.0",
     "semver": "^6.3.0",
     "serve-favicon": "^2.5.0",
@@ -84,11 +98,56 @@
     "yauzl": "^2.10.0"
   },
   "devDependencies": {
+    "electron": "^24.8.6",
+    "electron-builder": "^24.13.3",
+    "electron-is-dev": "^2.0.0",
+    "electron-reload": "^2.0.0-alpha.1",
     "mocha": "^6.2.3",
     "mocha-multi": "^1.1.6",
     "mocha-simple-html-reporter": "^1.1.0",
     "mongodb": "^4.10.0",
+    "nodemon": "^3.1.11",
     "should": "^13.2.3",
     "supertest": "^4.0.2"
+  },
+  "build": {
+    "productName": "SINQ Authoring Tool",
+    "appId": "org.sinq.authoring",
+    "asar": false,
+    "files": [
+      "backend/**/*",
+      "electron/**/*",
+      "frontend/build/**/*",
+      "frontend/src/**/*",
+      "node_modules/**/*",
+      "conf/**/*",
+      "lib/**/*",
+      "routes/**/*",
+      "plugins/**/*",
+      "migrations/**/*",
+      "install.js",
+      "server.js",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "resources/mongodb",
+        "to": "mongodb"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "${productName}-${version}-portable.${ext}"
+    },
+    "portable": {
+      "artifactName": "${productName}-${version}-portable.${ext}"
+    }
   }
 }

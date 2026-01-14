@@ -2,12 +2,12 @@
 
 .asset-picker-filters {
     padding: 10px;
-    background-color: lightblue;
+    background-color: @surface-color;
 }
 
 .asset-picker-sidebar-filter-button {
     &.selected {
-        background-color: #F2F2F2;
+        background-color: lighten(@surface-color, 5%);
     }
 }
 
@@ -36,11 +36,11 @@
     right: 0;
     overflow-x:hidden;
     text-align:center;
-    background-color: @white;
+    background-color: @surface-color;
 
     &-inner {
         padding: 30px 15px;
-        color: #9d9d9d;
+        color: @text-muted-color;
         .asset-preview-title {
           padding-bottom: 10px;
           color: @primary-color;
@@ -74,13 +74,13 @@
     margin-bottom:30px;
     float:left;
     cursor:pointer;
-    background-color: @white;
-    border: 1px solid #d6f2f9;
+    background-color: @surface-color;
+    border: 1px solid @border-color;
     border-radius:3px;
     transition: all 0.3s;
     box-shadow: 0px 0px 3pt 2pt transparent;
     &:hover {
-        box-shadow: 0 0 5px 2px #CBE1E6;
+        box-shadow: 0 0 5px 2px fade(@primary-color, 30%);
     }
 
     &.selected {
@@ -100,13 +100,13 @@
         background-position:center;
         background-size:cover;
         background-repeat: no-repeat;
-        background-color: @white;
+        background-color: @surface-color;
         text-align:center;
-        border: 1px solid #d6f2f9;
+        border: 1px solid @border-color;
         border-left: none;
         border-right: none;
         i {
-            color:rgb(214, 242, 249);
+            color: @text-muted-color;
             padding-top:35px;
             font-size:50px;
         }
@@ -134,12 +134,12 @@
         top:0;
         left:0;
         text-align: center;
-        background-color:rgba(255,255,255,0.8);
+        background-color: fade(@surface-color, 80%);
         i {
             position: relative;
             top: 50%;
             margin-top: -36px;
-            color: #ff5567;
+            color: @alert-color;
             font-size:72px;
             line-height:72px;
         }
@@ -190,15 +190,15 @@
         width: 200px;
         border: none;
         border-radius: 3px;
-        background: #627178;
-        color: @white;
+        background: @surface-color;
+        color: @text-primary-color;
     }
     .modal & button {
         margin-left:-4px;
-        color:#9cabc4;
+        color: @text-secondary-color;
         transition:color 0.3s;
         &:hover {
-            color: @white;
+            color: @text-primary-color;
         }
     }
 }
@@ -214,8 +214,8 @@
     top:40px;
     left:0px;
     z-index:5;
-    background-color: @white;
-    box-shadow:1px 2px 4px 0px #666;
+    background-color: @surface-color;
+    box-shadow:1px 2px 4px 0px rgba(0,0,0,0.5);
     &-inner {
         padding:30px;
     }

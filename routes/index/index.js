@@ -1,7 +1,7 @@
 const configuration = require('../../lib/configuration');
 const express = require('express');
 const server = module.exports = express();
-const origin = require('../../');
+const origin = require('../../lib/application');
 const app = origin();
 const installHelper = require('../../lib/installHelpers');
 const logger = require('../../lib/logger');

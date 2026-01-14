@@ -1,6 +1,6 @@
 # Change Log
 
-All notable changes to the Adapt authoring tool are documented in this file.
+All notable changes to SINQ Authoring Tool are documented in this file.
 
 **IMPORTANT**: For information on how to **correctly and safely** update your installation, please consult **INSTALL.md**.<br/>
 _Note that we adhere to the [semantic versioning](http://semver.org/) scheme for release numbering._

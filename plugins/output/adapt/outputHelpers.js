@@ -14,7 +14,7 @@ var filestorage = require('../../../lib/filestorage');
 var logger = require("../../../lib/logger");
 var installHelpers = require('../../../lib/installHelpers');
 
-var origin = require('../../../')();
+var origin = require('../../../lib/application')();
 
 /**
 * unzip import
