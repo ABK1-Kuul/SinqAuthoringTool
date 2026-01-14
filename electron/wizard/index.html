@@ -318,13 +318,13 @@
         <p>• Admin password</p>
         <p><strong>Optional:</strong> SMTP configuration for email notifications</p>
         <p>Most settings are pre-configured with safe defaults. You can change them if needed.</p>
-      </div>
+            </div>
       <div class="actions">
         <div></div>
         <button class="primary" onclick="wizard.nextPage()">Get Started</button>
-      </div>
-    </div>
-  </div>
+              </div>
+            </div>
+          </div>
 
   <!-- Page 2: Core Configuration -->
   <div id="page-core" class="page hidden">
@@ -338,13 +338,13 @@
 
       <fieldset>
         <legend>Database Settings (Auto-filled)</legend>
-        <div class="grid two">
-          <div>
+          <div class="grid two">
+            <div>
             <label>MongoDB Host</label>
             <input type="text" id="dbHost" value="localhost" disabled />
             <div class="hint">Database runs locally</div>
-          </div>
-          <div>
+            </div>
+            <div>
             <label>MongoDB Port</label>
             <input type="number" id="dbPort" value="27017" disabled />
             <div class="hint">Default MongoDB port</div>
@@ -595,19 +595,19 @@
         document.querySelectorAll('.toggle-pw').forEach(el => {
           el.addEventListener('click', () => {
             const targetId = el.dataset.target;
-            const input = document.getElementById(targetId);
-            if (!input) return;
-            const isPassword = input.type === 'password';
-            input.type = isPassword ? 'text' : 'password';
+      const input = document.getElementById(targetId);
+      if (!input) return;
+      const isPassword = input.type === 'password';
+      input.type = isPassword ? 'text' : 'password';
             el.textContent = isPassword ? 'Hide' : 'Show';
-          });
-        });
+      });
+    });
       },
 
       setupSmtpToggle() {
         const smtpEnabled = document.getElementById('smtpEnabled');
         const smtpFields = document.getElementById('smtpFields');
-        smtpEnabled.addEventListener('change', () => {
+    smtpEnabled.addEventListener('change', () => {
           smtpFields.style.display = smtpEnabled.checked ? 'block' : 'none';
           if (!smtpEnabled.checked) {
             this.smtpTested = false;
@@ -654,7 +654,7 @@
         const adminPassword2 = document.getElementById('adminPassword2').value;
 
         const errorEl = document.getElementById('error-core');
-        errorEl.style.display = 'none';
+      errorEl.style.display = 'none';
 
         if (!tenantName || !/^[a-z0-9-]+$/.test(tenantName)) {
           errorEl.textContent = 'Tenant name must be lowercase, alphanumeric with hyphens only.';
@@ -681,8 +681,8 @@
         }
 
         if (adminPassword !== adminPassword2) {
-          errorEl.textContent = 'Passwords do not match.';
-          errorEl.style.display = 'block';
+        errorEl.textContent = 'Passwords do not match.';
+        errorEl.style.display = 'block';
           return false;
         }
 
@@ -743,9 +743,9 @@
 
         if (!from || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(from)) {
           errorEl.textContent = 'Please enter a valid sender email address.';
-          errorEl.style.display = 'block';
+        errorEl.style.display = 'block';
           return false;
-        }
+      }
 
         this.config.smtp = {
           enabled: true,
@@ -780,9 +780,9 @@
             errorEl.style.display = 'block';
             successEl.style.display = 'none';
           }
-        } catch (err) {
+      } catch (err) {
           errorEl.textContent = err.message || 'Failed to test SMTP connection.';
-          errorEl.style.display = 'block';
+        errorEl.style.display = 'block';
           successEl.style.display = 'none';
         }
       },
@@ -852,7 +852,7 @@
           }, (progress) => {
             if (progress.message) {
               addLog(progress.message, progress.type || 'info');
-            }
+      }
             if (progress.status) {
               statusEl.textContent = progress.status;
             }
