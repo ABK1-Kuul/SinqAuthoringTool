@@ -44,3 +44,7 @@ mongod.lock
 WiredTiger*
 diagnostic.data/
 journal/
+
+# MongoDB debug symbols (PDB files are very large)
+*.pdb
+resources/mongodb/bin/*.pdb
