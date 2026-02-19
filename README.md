@@ -128,7 +128,7 @@ SINQ Authoring Tool
 
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone https://github.com/adaptlearning/adapt_authoring.git
 cd adapt_authoring-1
 
 # Install dependencies
@@ -231,6 +231,6 @@ This repository provides a preview of the project's capabilities.
 
 **Built with ❤️ for the eLearning community**
 
-[Report Issue](https://github.com/your-repo/issues) · [Request Feature](https://github.com/your-repo/issues) · [View Documentation](https://github.com/adaptlearning/adapt_authoring/wiki)
+[Report Issue](https://github.com/adaptlearning/adapt_authoring/issues) · [Request Feature](https://github.com/adaptlearning/adapt_authoring/issues) · [View Documentation](https://github.com/adaptlearning/adapt_authoring/wiki)
 
 </div>

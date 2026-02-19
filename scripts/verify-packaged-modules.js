@@ -39,10 +39,10 @@ function verifyPackagedModules(appPath) {
     const modulePath = path.join(nodeModulesPath, moduleName);
     if (fs.existsSync(modulePath)) {
       found.push(moduleName);
-      console.log(`âœ“ ${moduleName}`);
+      console.log(`[OK] ${moduleName}`);
     } else {
       missing.push(moduleName);
-      console.log(`âœ— ${moduleName} - MISSING`);
+      console.log(`[X] ${moduleName} - MISSING`);
     }
   });
 
@@ -51,10 +51,10 @@ function verifyPackagedModules(appPath) {
   console.log(`Missing: ${missing.length}/${CRITICAL_MODULES.length}`);
 
   if (missing.length > 0) {
-    console.log(`\nâŒ Missing modules: ${missing.join(', ')}`);
+    console.log(`\n[FAIL] Missing modules: ${missing.join(', ')}`);
     process.exit(1);
   } else {
-    console.log(`\nâœ… All critical modules are present!`);
+    console.log(`\n[OK] All critical modules are present!`);
     process.exit(0);
   }
 }

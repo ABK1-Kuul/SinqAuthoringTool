@@ -26,14 +26,21 @@ const LOG_FILE = path.join(USER_DATA, 'mongodb', 'mongod.log');
 
 let mongoProcess = null;
 let stopping = false;
+const MAX_RESTARTS = 5;
+let restartCount = 0;
+
+function getMongoBinaryName() {
+  return process.platform === 'win32' ? 'mongod.exe' : 'mongod';
+}
 
 function getMongoBinaryPath() {
+  const binaryName = getMongoBinaryName();
   // Packaged build: use resourcesPath
   if (app.isPackaged && process.resourcesPath) {
-    return path.join(process.resourcesPath, 'mongodb', 'bin', 'mongod.exe');
+    return path.join(process.resourcesPath, 'mongodb', 'bin', binaryName);
   }
   // Dev mode: assume npm run electron from project root
-  return path.join(process.cwd(), 'resources', 'mongodb', 'bin', 'mongod.exe');
+  return path.join(process.cwd(), 'resources', 'mongodb', 'bin', binaryName);
 }
 
 async function ensureDbDir() {
@@ -157,8 +164,14 @@ async function startMongo() {
     }
     mongoProcess = null;
     if (!stopping && code !== 0) {
-      // auto-restart on crash with small delay
-      setTimeout(() => startMongo().catch(err => console.error('[mongo] restart failed', err)), 500);
+      if (restartCount >= MAX_RESTARTS) {
+        console.error(`[mongo] Max restarts (${MAX_RESTARTS}) reached. Giving up.`);
+        return;
+      }
+      restartCount++;
+      const backoffMs = Math.min(500 * Math.pow(2, restartCount - 1), 10000);
+      console.log(`[mongo] Restart attempt ${restartCount}/${MAX_RESTARTS} in ${backoffMs}ms`);
+      setTimeout(() => startMongo().catch(err => console.error('[mongo] restart failed', err)), backoffMs);
     }
   });
   
@@ -168,6 +181,7 @@ async function startMongo() {
 
 function stopMongo() {
   stopping = true;
+  restartCount = 0;
   if (mongoProcess && !mongoProcess.killed) {
     mongoProcess.kill('SIGINT');
   }

@@ -1,5 +1,6 @@
 const { app, BrowserWindow, ipcMain, Menu, session } = require('electron');
 const path = require('path');
+const { pathToFileURL } = require('url');
 const fs = require('fs-extra');
 const isDev = require('electron-is-dev');
 const http = require('http');
@@ -185,9 +186,18 @@ function waitForBackendReady(port, timeoutMs = 15000) {
     const check = () => {
       const req = http.get({ host: '127.0.0.1', port, path: '/', timeout: 2000 }, res => {
         res.resume();
+        req.destroy();
         resolve(true);
       });
       req.on('error', () => {
+        req.destroy();
+        if (Date.now() - start > timeoutMs) {
+          return reject(new Error(`Backend not reachable on port ${port}`));
+        }
+        setTimeout(check, 250);
+      });
+      req.on('timeout', () => {
+        req.destroy();
         if (Date.now() - start > timeoutMs) {
           return reject(new Error(`Backend not reachable on port ${port}`));
         }
@@ -365,8 +375,9 @@ async function showWizard() {
     },
   });
   wizardWindow.removeMenu();
-  lockNavigation(wizardWindow, [`file://${path.join(__dirname, 'wizard')}`]);
-  wizardWindow.loadURL(`file://${path.join(__dirname, 'wizard', 'index.html')}`);
+  const wizardBaseUrl = pathToFileURL(path.join(__dirname, 'wizard') + path.sep).href;
+  lockNavigation(wizardWindow, [wizardBaseUrl]);
+  wizardWindow.loadURL(pathToFileURL(path.join(__dirname, 'wizard', 'index.html')).href);
   
   // Automatically open DevTools in development mode for wizard window too
   if (isDev) {
