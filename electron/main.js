@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, Menu, session } = require('electron');
+const { app, BrowserWindow, ipcMain, Menu, session, dialog } = require('electron');
 const path = require('path');
 const { pathToFileURL } = require('url');
 const fs = require('fs-extra');
@@ -12,6 +12,7 @@ const installationService = require('./services/installation');
 const smtpService = require('./services/smtp');
 const installHelpers = require('../lib/installHelpers');
 const sessionSecret = require('../lib/sessionSecret');
+const runPreflightCheck = require('../scripts/check-env');
 
 // Global error handlers - catch unhandled errors gracefully
 process.on('uncaughtException', (error) => {
@@ -23,7 +24,6 @@ process.on('uncaughtException', (error) => {
   }
   // For other errors, log but don't show dialog in dev mode
   if (!isDev) {
-    const { dialog } = require('electron');
     dialog.showErrorBox('Application Error', 
       `An unexpected error occurred:\n\n${error.message}`);
   }
@@ -146,7 +146,6 @@ function setMainMenu() {
         {
           label: 'About',
           click: () => {
-            const { dialog } = require('electron');
             dialog.showMessageBox({
               type: 'info',
               title: 'SINQ Authoring Tool',
@@ -396,8 +395,6 @@ async function bootstrap() {
     await mongodbService.startMongo();
   } catch (err) {
     console.error('Failed to start MongoDB:', err);
-    // Show error dialog instead of crashing
-    const { dialog } = require('electron');
     const mongoService = require('./services/mongodb');
     const mongoPath = mongoService.getMongoBinaryPath();
     dialog.showErrorBox('MongoDB Startup Error', 
@@ -507,10 +504,20 @@ ipcMain.handle('wizard:launchApp', async () => {
 
 app.whenReady().then(() => {
   applyCsp();
+
+  const preflight = runPreflightCheck(app);
+  if (!preflight.success) {
+    dialog.showErrorBox(
+      'System Environment Error',
+      'The application cannot start due to the following issues:\n\n' + preflight.errors.join('\n')
+    );
+    app.quit();
+    return;
+  }
+
   return bootstrap();
 }).catch(err => {
   console.error('Failed to start application', err);
-  const { dialog } = require('electron');
   dialog.showErrorBox('Application Error', `Failed to start: ${err.message}`);
   app.quit();
 });
