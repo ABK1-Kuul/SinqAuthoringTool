@@ -62,4 +62,19 @@ npm run verify:packaged
 
 ---
 
+## 5. Automated Releases (GitHub Actions)
+
+When you push a version tag (e.g., `v1.0.1`), the workflow at `.github/workflows/build.yml` will:
+
+1. Build the frontend and Electron app
+2. Create a **draft release** on GitHub with the installer attached
+3. You can then review and publish the release manually
+
+```bash
+git tag v1.0.1
+git push origin v1.0.1
+```
+
+---
+
 *Last updated: Phase 5 — Production Readiness*

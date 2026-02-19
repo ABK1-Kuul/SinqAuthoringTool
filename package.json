@@ -26,7 +26,8 @@
     "dev": "cross-env npm run build:frontend:dev && electron .",
     "start": "electron .",
     "verify:packaged": "node scripts/verify-packaged-modules.js",
-    "build:electron:win": "npm run build:frontend && electron-builder --win nsis && npm run verify:packaged"
+    "build:electron:win": "npm run build:frontend && electron-builder --win nsis && npm run verify:packaged",
+    "release": "npm run build:frontend && electron-builder --win --publish always && npm run verify:packaged"
   },
   "dependencies": {
     "@babel/core": "^7.19.6",
