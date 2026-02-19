@@ -174,7 +174,8 @@ async function runInstallation(config, progressCallback) {
             directory: frameworkDir,
             repository: finalConfig.frameworkRepository || installHelpers.DEFAULT_FRAMEWORK_REPO,
             revision: finalConfig.frameworkRevision || frameworkVersion,
-            force: false
+            force: false,
+            app: appInstance,
           }, (err) => {
             if (err) {
               progress.update(`Framework installation warning: ${err.message}`, 'error', 85);

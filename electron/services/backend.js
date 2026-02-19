@@ -88,6 +88,7 @@ function stopBackend() {
       console.error('[backend] failed to stop server', err);
     } finally {
       backendApp = null;
+      backendReadyPromise = null;
     }
   }
 }

@@ -3,6 +3,9 @@ var fs = require('fs-extra');
 var path = require('path');
 var mongodb = require('mongodb');
 
+// Global wipe: drop test database before any tests run (prevents E11000 duplicate key errors)
+require('./globalSetup');
+
 // Require the backend application directly to avoid invoking the Electron main process during tests
 var origin = require('../lib/application');
 var auth = require('../lib/auth');
@@ -172,6 +175,7 @@ function testLoader() {
   for(var i = 0, count = contents.length; i < count; i++) {
     var item = contents[i];
     if(path.join(__dirname, item) === __filename) continue;
+    if(item === 'globalSetup.js') continue;
 
     var parts = item.split('.');
     if(parts.pop() !== 'js') continue;

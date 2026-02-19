@@ -156,7 +156,8 @@ function doUpdate(data) {
       installHelpers.updateFramework({
         repository: configuration.getConfig('frameworkRepository'),
         revision: data.adapt_framework,
-        directory: dir
+        directory: dir,
+        app: app,
       }, function(error) {
         if(error) {
           console.log(`Failed to upgrade ${dir.replace(configuration.serverRoot, '')} to ${data.adapt_framework}`);
