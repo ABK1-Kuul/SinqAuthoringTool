@@ -168,7 +168,7 @@ function doUpdate(data) {
       });
     },
     function runMigrations(callback) {
-      installHelpers.runMigrations(callback);
+      installHelpers.runMigrations({ app }, callback);
     }
   ], function(error) {
     if(error) {

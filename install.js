@@ -289,7 +289,8 @@ function generatePromptOverrides() {
     addConfig(configData);
     configData.install = true;
   }
-  const sessionSecret = USE_CONFIG && configData.sessionSecret || crypto.randomBytes(64).toString('hex');
+  const sessionSecretMod = require('./lib/sessionSecret');
+  const sessionSecret = sessionSecretMod.getSessionSecret(path.join(process.cwd(), 'conf'));
   addConfig({ sessionSecret: sessionSecret });
   // NOTE config.json < cmd args
   return Object.assign({}, configData, optimist.argv);
@@ -316,7 +317,7 @@ function start() {
       createMasterTenant,
       createSuperUser,
       buildFrontend,
-      installHelpers.runMigrations
+      function runMigrations(cb) { installHelpers.runMigrations({ app }, cb); }
     ], function(error, results) {
       if(error) {
         console.error('ERROR: ', error);

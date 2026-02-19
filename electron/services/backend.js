@@ -21,7 +21,7 @@ async function ensureConfig(configPath, configData) {
 function startBackend({ configPath, port, dataRoot }) {
   if (backendReadyPromise) return backendReadyPromise;
   const backendRoot = getBackendRoot();
-  process.chdir(backendRoot);
+  // Use absolute paths; do not chdir to avoid global side effects
   // Force embedded Mongo settings for the backend process
   process.env.DB_PORT = process.env.DB_PORT || String(require('./mongodb').MONGO_PORT);
   process.env.MONGO_PORT = process.env.MONGO_PORT || String(require('./mongodb').MONGO_PORT);

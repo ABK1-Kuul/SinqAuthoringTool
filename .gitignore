@@ -1,4 +1,5 @@
 /conf/config.json
+.session-key
 /conf/migrate.json
 /data
 

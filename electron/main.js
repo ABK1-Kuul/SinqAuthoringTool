@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, Menu } = require('electron');
+const { app, BrowserWindow, ipcMain, Menu, session } = require('electron');
 const path = require('path');
 const fs = require('fs-extra');
 const isDev = require('electron-is-dev');
@@ -10,6 +10,7 @@ const setupService = require('./services/setup');
 const installationService = require('./services/installation');
 const smtpService = require('./services/smtp');
 const installHelpers = require('../lib/installHelpers');
+const sessionSecret = require('../lib/sessionSecret');
 
 // Global error handlers - catch unhandled errors gracefully
 process.on('uncaughtException', (error) => {
@@ -35,6 +36,27 @@ process.on('unhandledRejection', (reason, promise) => {
     return;
   }
 });
+
+// Content-Security-Policy: allow self, local backend; permit inline for Adapt preview
+const CSP_HEADER = [
+  "default-src 'self'",
+  "connect-src 'self' http://127.0.0.1:* http://localhost:* ws://127.0.0.1:* ws://localhost:*",
+  "script-src 'self' 'unsafe-inline'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob:",
+  "font-src 'self'",
+  "frame-src 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+].join('; ');
+
+function applyCsp() {
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    const responseHeaders = { ...details.responseHeaders };
+    responseHeaders['Content-Security-Policy'] = [CSP_HEADER];
+    callback({ responseHeaders });
+  });
+}
 
 // Enable auto-reload in development mode only
 // This watches for changes and handles reloads/restarts automatically
@@ -187,7 +209,7 @@ function baseDefaults() {
     dbName: 'adapt-tenant-master',
     outputPlugin: 'adapt',
     auth: 'local',
-    sessionSecret: require('crypto').randomBytes(64).toString('hex'),
+    sessionSecret: sessionSecret.getSessionSecret(path.join(USER_DATA, 'config')),
     installed: false,
     masterTenant: {
       name: 'master',
@@ -242,6 +264,7 @@ async function createWindow(port) {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
+      webSecurity: true,
       // Enable DevTools in development mode only
       devTools: isDev,
     },
@@ -336,6 +359,7 @@ async function showWizard() {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
+      webSecurity: true,
       // Enable DevTools in development mode only
       devTools: isDev,
     },
@@ -470,7 +494,10 @@ ipcMain.handle('wizard:launchApp', async () => {
   }
 });
 
-app.whenReady().then(bootstrap).catch(err => {
+app.whenReady().then(() => {
+  applyCsp();
+  return bootstrap();
+}).catch(err => {
   console.error('Failed to start application', err);
   const { dialog } = require('electron');
   dialog.showErrorBox('Application Error', `Failed to start: ${err.message}`);

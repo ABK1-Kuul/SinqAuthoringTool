@@ -84,7 +84,7 @@ async function runInstallation(config, progressCallback) {
       dbName: 'adapt-tenant-master',
       outputPlugin: 'adapt',
       auth: 'local',
-      sessionSecret: require('crypto').randomBytes(64).toString('hex'),
+      sessionSecret: require('../../lib/sessionSecret').getSessionSecret(path.dirname(configPath)),
       root: path.join(__dirname, '..', '..'),
       frameworkRepository: core.frameworkRepo || installHelpers.DEFAULT_FRAMEWORK_REPO,
       frameworkRevision: frameworkVersion,
