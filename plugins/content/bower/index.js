@@ -689,17 +689,16 @@ function addPackage (plugin, packageInfo, options, cb) {
   }
 
   var schemaPath = path.join(packageInfo.canonicalDir, defaultOptions._adaptSchemaFile);
-  fs.exists(schemaPath, function (exists) {
-    if (!exists) {
-      if (options.strict) {
-        return cb(new PluginPackageError('Package does not contain a schema'));
-      }
-
-      logger.log('warn', 'ignoring package with no schema: ' + pkgMeta.name);
-      return cb(null);
+  if (!fs.existsSync(schemaPath)) {
+    if (options.strict) {
+      return cb(new PluginPackageError('Package does not contain a schema'));
     }
 
-    fs.readFile(schemaPath, function (err, data) {
+    logger.log('warn', 'ignoring package with no schema: ' + pkgMeta.name);
+    return cb(null);
+  }
+
+  fs.readFile(schemaPath, function (err, data) {
       if (err) {
         if (options.strict) {
           return cb(new PluginPackageError('Failed to parse schema for package ' + pkgMeta.name));
@@ -728,7 +727,6 @@ function addPackage (plugin, packageInfo, options, cb) {
         cb(null, plugin);
       });
     });
-  });
 
   function copyPlugin(pluginDoc, addCb) {
     // @TODO - this should be removed when we move to symlinked plugins :-\
@@ -1118,21 +1116,18 @@ function handleUploadedPlugin (req, res, next) {
           async.some(directoryList, function(directory, asyncCallback) {
             var bowerPath = path.join(outputPath, directory, 'bower.json');
 
-            fs.exists(bowerPath, function(exists) {
-              if (exists) {
-                canonicalDir = path.join(outputPath, directory);
-                try {
-                  packageJson = require(bowerPath);
-                } catch (error) {
-                  logger.log('error', 'failed to find bower file at ' + bowerPath, error);
-                  return asyncCallback();
-                }
-                asyncCallback(true);
-              } else {
-                asyncCallback();
+            if (fs.existsSync(bowerPath)) {
+              canonicalDir = path.join(outputPath, directory);
+              try {
+                packageJson = require(bowerPath);
+              } catch (error) {
+                logger.log('error', 'failed to find bower file at ' + bowerPath, error);
+                return asyncCallback();
               }
-            });
-
+              asyncCallback(true);
+            } else {
+              asyncCallback();
+            }
           }, function(hasResults) {
             if (!hasResults) {
               return next(app.polyglot.t('app.cannotfindbower'));

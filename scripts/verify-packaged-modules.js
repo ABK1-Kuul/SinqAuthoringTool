@@ -1,4 +1,4 @@
-﻿const fs = require('fs');
+const fs = require('fs');
 const path = require('path');
 
 // Critical modules that must be present in the packaged app
@@ -23,6 +23,8 @@ const CRITICAL_MODULES = [
   'mongoose',
   'async',
   'underscore',
+  'axios',
+  'bcrypt',
 ];
 
 function verifyPackagedModules(appPath) {
