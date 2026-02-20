@@ -10,7 +10,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/adaptlearning/adapt_authoring.git"
+    "url": "https://github.com/ABK1-Kuul/SinqAuthoringTool.git"
   },
   "main": "electron/main.js",
   "engines": {
