@@ -113,9 +113,10 @@
     "supertest": "^4.0.2"
   },
   "build": {
-    "productName": "SINQ Authoring Tool",
-    "appId": "org.sinq.authoring",
-    "asar": false,
+  "productName": "SINQ Authoring Tool",
+  "appId": "org.sinq.authoring",
+  "asar": false,
+  "npmRebuild": false,
     "files": [
       "backend/**/*",
       "electron/**/*",
