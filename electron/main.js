@@ -117,9 +117,7 @@ const USER_DATA = getUserDataPath();
 const DEFAULT_PORT = 3000;
 const CONFIG_PATH = path.join(USER_DATA, 'config', 'config.json');
 const APP_ICON = (() => {
-  const ico = path.join(__dirname, '..', 'resources', 'icon.ico');
-  const png = path.join(__dirname, '..', 'resources', 'icon.png');
-  if (fs.existsSync(ico)) return ico;
+  const png = path.join(__dirname, '..', 'frontend', 'src', 'core', 'assets', 'Sinq-learning.png');
   if (fs.existsSync(png)) return png;
   return undefined;
 })();

@@ -6,7 +6,10 @@
   "description": "A server-based user interface for authoring eLearning courses using the Adapt Framework. SINQ Authoring Tool.",
   "keywords": [
     "adapt",
-    "authoring"
+    "authoring",
+    "SORM",
+    "SINQ authoring",
+    "H5P"
   ],
   "repository": {
     "type": "git",
@@ -113,10 +116,10 @@
     "supertest": "^4.0.2"
   },
   "build": {
-  "productName": "SINQ Authoring Tool",
-  "appId": "org.sinq.authoring",
-  "asar": false,
-  "npmRebuild": false,
+    "productName": "SINQ Authoring Tool",
+    "appId": "org.sinq.authoring",
+    "asar": false,
+    "npmRebuild": false,
     "files": [
       "backend/**/*",
       "electron/**/*",
@@ -147,6 +150,7 @@
           ]
         }
       ],
+      "icon": "frontend/src/core/assets/winicon.png",
       "artifactName": "${productName}-${version}-portable.${ext}"
     },
     "portable": {

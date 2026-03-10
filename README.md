@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="frontend/src/core/assets/adapt-learning-logo-white.png" alt="SINQ Authoring Tool Logo" width="250" />
+</div>
+
 # SINQ Authoring Tool
 
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
