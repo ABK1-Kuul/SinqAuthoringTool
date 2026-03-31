@@ -42,9 +42,9 @@ process.on('unhandledRejection', (reason, promise) => {
 const CSP_HEADER = [
   "default-src 'self'",
   "connect-src 'self' http://127.0.0.1:* http://localhost:* ws://127.0.0.1:* ws://localhost:*",
-  "script-src 'self' 'unsafe-inline'",
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.ckeditor.com",
+  "style-src 'self' 'unsafe-inline' https://cdn.ckeditor.com",
+  "img-src 'self' data: blob: https://cdn.ckeditor.com",
   "font-src 'self'",
   "frame-src 'self'",
   "object-src 'none'",
