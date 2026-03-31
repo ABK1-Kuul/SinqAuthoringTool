@@ -28,15 +28,19 @@ The following improvements were made during our production readiness audit:
 
 - **Hardened Security** — Strict CSP (Content Security Policy) and context isolation. Navigation locking and URL allowlisting prevent injection and unauthorized navigation.
 
-- **Modern Stack** — Node 20+, Axios, and Bcrypt. Dependencies updated for security and compatibility.
+- **Modern Stack** — Node 18+ compatible (Node 20 LTS recommended), Axios, and Bcrypt. Dependencies updated for security and compatibility.
 
 - **Automated Lifecycle** — No manual MongoDB setup required. The embedded database initializes automatically on first run.
 
 - **Pre-flight Diagnostics** — Integrated environment verification. Clear error messages when prerequisites are missing.
 
+- **Rich Text & Asset Integration** — Configured Content Security Policy (CSP) to seamlessly support `unsafe-eval` for underscore.js templates and external assets like CKEditor (`cdn.ckeditor.com`) without compromising overall electron security.
+
 ---
 
 ## Quick Start for Developers
+
+**Prerequisites**: Ensure you have Node.js (>= 18) and a local MongoDB instance available (default port `27017`).
 
 ```bash
 # Clone the repository
@@ -50,7 +54,7 @@ npm install
 npm run dev
 ```
 
-We use **cross-env** for seamless development across Windows and Unix. The same commands work everywhere.
+The application will automatically start the server on `http://localhost:3000` and open the Electron interface. We use **cross-env** for seamless development across Windows and Unix. The same commands work everywhere.
 
 ---
 
