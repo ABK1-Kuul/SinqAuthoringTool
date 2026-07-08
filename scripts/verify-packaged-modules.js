@@ -24,7 +24,7 @@ const CRITICAL_MODULES = [
   'async',
   'underscore',
   'axios',
-  'bcrypt',
+  'bcryptjs',
 ];
 
 function verifyPackagedModules(appPath) {
