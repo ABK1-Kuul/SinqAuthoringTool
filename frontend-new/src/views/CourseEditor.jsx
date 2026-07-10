@@ -51,7 +51,7 @@ export default function CourseEditor({ courseId, user, onBack }) {
 
       // 3. Trigger initial preview compilation
       const tenantId = user?._tenantId || user?.tenant?._id || 'adapt-tenant-master';
-      setPreviewUrl(`/api/preview/${tenantId}/${courseId}/index.html`);
+      setPreviewUrl(`/preview/${tenantId}/${courseId}/index.html`);
     } catch (e) {
       console.error('Failed to load editor data:', e);
     } finally {
