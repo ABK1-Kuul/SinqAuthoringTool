@@ -67,7 +67,7 @@ export default function CourseEditor({ courseId, user, onBack }) {
     setPreviewLoading(true);
     try {
       // Trigger framework build for this course
-      await api.getContent(`output/adapt/preview/${courseId}`);
+      await api.previewCourse(courseId);
       // Force reload preview iframe
       const iframe = document.getElementById('preview-frame');
       if (iframe) {

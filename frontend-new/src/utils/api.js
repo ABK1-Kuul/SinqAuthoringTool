@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const client = axios.create({
   baseURL: '',
-  timeout: 15000,
+  timeout: 60000,
 });
 
 // Auto-inject token or handle errors
@@ -34,7 +34,7 @@ export const api = {
   deleteContent: (type, id) => client.delete(`/api/content/${id}`),
 
   // Course Preview
-  previewCourse: (id) => client.post(`/api/preview/${id}`),
+  previewCourse: (id) => client.get(`/api/output/adapt/preview/${id}`),
   
   // Plugins management
   getPlugins: () => client.get('/api/plugin'),

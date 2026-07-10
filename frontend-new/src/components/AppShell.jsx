@@ -32,8 +32,7 @@ export default function AppShell({ user, currentView, onViewChange, onLogout, ch
       {/* Sidebar */}
       <aside style={styles.sidebar}>
         <div style={styles.sidebarHeader}>
-          <div style={styles.logoSymbol}>S</div>
-          <span style={styles.logoText}>SINQ</span>
+          <img src="/Sinq-learning.png" alt="SINQ Learning Logo" style={styles.logoImage} />
         </div>
 
         <nav style={styles.nav}>
@@ -105,12 +104,16 @@ export default function AppShell({ user, currentView, onViewChange, onLogout, ch
               {themeMenuOpen && (
                 <div style={styles.themeDropdown}>
                   <button onClick={() => changeTheme('dark')} style={styles.dropdownItem}>
-                    <Moon size={14} />
-                    <span>Obsidian Slate</span>
+                    <div style={{...styles.colorIndicator, backgroundColor: '#ff4500'}} />
+                    <span>Fox Slate (Default)</span>
                   </button>
                   <button onClick={() => changeTheme('light')} style={styles.dropdownItem}>
                     <Sun size={14} />
                     <span>Clean Light</span>
+                  </button>
+                  <button onClick={() => changeTheme('violet')} style={styles.dropdownItem}>
+                    <div style={{...styles.colorIndicator, backgroundColor: '#8b5cf6'}} />
+                    <span>Violet Glow</span>
                   </button>
                   <button onClick={() => changeTheme('emerald')} style={styles.dropdownItem}>
                     <div style={{...styles.colorIndicator, backgroundColor: '#10b981'}} />
@@ -157,22 +160,11 @@ const styles = {
     gap: '12px',
     borderBottom: '1px solid var(--border-color)',
   },
-  logoSymbol: {
-    width: '32px',
-    height: '32px',
-    borderRadius: 'var(--border-radius-sm)',
-    backgroundColor: 'var(--accent-color)',
-    color: 'var(--accent-text)',
-    fontSize: '18px',
-    fontWeight: '800',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoText: {
-    fontSize: '20px',
-    fontWeight: '800',
-    letterSpacing: '-0.5px',
+  logoImage: {
+    height: '36px',
+    maxWidth: '100%',
+    objectFit: 'contain',
+    display: 'block',
   },
   nav: {
     padding: '20px 12px',

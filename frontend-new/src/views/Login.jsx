@@ -35,8 +35,7 @@ export default function Login({ onLoginSuccess }) {
       <div style={styles.backgroundGlow} />
       <div style={styles.card}>
         <div style={styles.logoContainer}>
-          <div style={styles.logoSymbol}>S</div>
-          <h1 style={styles.logoText}>SINQ <span style={styles.logoSubText}>AUTHORING</span></h1>
+          <img src="/Sinq-learning.png" alt="SINQ Learning Logo" style={styles.logoImage} />
         </div>
         <p style={styles.subtitle}>Welcome back! Sign in to continue building.</p>
 
@@ -142,31 +141,12 @@ const styles = {
     gap: '12px',
     marginBottom: '8px',
   },
-  logoSymbol: {
-    width: '42px',
-    height: '42px',
-    borderRadius: 'var(--border-radius-md)',
-    backgroundColor: 'var(--accent-color)',
-    color: 'var(--accent-text)',
-    fontSize: '24px',
-    fontWeight: '800',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    boxShadow: '0 0 15px var(--accent-glow)',
-  },
-  logoText: {
-    fontSize: '26px',
-    fontWeight: '800',
-    letterSpacing: '-1px',
-  },
-  logoSubText: {
-    color: 'var(--accent-color)',
-    fontSize: '12px',
-    fontWeight: '600',
+  logoImage: {
+    height: '48px',
+    maxWidth: '100%',
+    objectFit: 'contain',
     display: 'block',
-    letterSpacing: '2px',
-    marginTop: '-4px',
+    margin: '0 auto 8px auto',
   },
   subtitle: {
     fontSize: '14px',
