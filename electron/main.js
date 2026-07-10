@@ -210,9 +210,7 @@ function baseDefaults() {
     serverPort: DEFAULT_PORT,
     serverName: 'localhost',
     dataRoot: path.join(app.getPath('userData'), 'data'),
-    dbType: 'mongoose',
-    dbHost: '127.0.0.1',
-    dbPort: 27017,
+    dbType: 'sqlite',
     dbName: 'adapt-tenant-master',
     outputPlugin: 'adapt',
     auth: 'local',
@@ -255,9 +253,11 @@ async function loadConfig() {
 function normalizeConfig(cfg) {
   const normalized = {
     ...cfg,
-    dbHost: '127.0.0.1',
-    dbPort: mongodbService.MONGO_PORT,
   };
+  if (normalized.dbType === 'mongoose') {
+    normalized.dbHost = normalized.dbHost || '127.0.0.1';
+    normalized.dbPort = normalized.dbPort || mongodbService.MONGO_PORT;
+  }
   return normalized;
 }
 
@@ -389,19 +389,21 @@ async function showWizard() {
 // Removed - replaced by installation service
 
 async function bootstrap() {
-  try {
-    await mongodbService.startMongo();
-  } catch (err) {
-    console.error('Failed to start MongoDB:', err);
-    const mongoService = require('./services/mongodb');
-    const mongoPath = mongoService.getMongoBinaryPath();
-    dialog.showErrorBox('MongoDB Startup Error', 
-      `Failed to start MongoDB: ${err.message}\n\n` +
-      `Please ensure MongoDB binary exists at:\n${mongoPath}`);
-    app.quit();
-    return;
-  }
   const config = await loadConfig();
+  if (config.dbType === 'mongoose') {
+    try {
+      await mongodbService.startMongo();
+    } catch (err) {
+      console.error('Failed to start MongoDB:', err);
+      const mongoService = require('./services/mongodb');
+      const mongoPath = mongoService.getMongoBinaryPath();
+      dialog.showErrorBox('MongoDB Startup Error', 
+        `Failed to start MongoDB: ${err.message}\n\n` +
+        `Please ensure MongoDB binary exists at:\n${mongoPath}`);
+      app.quit();
+      return;
+    }
+  }
   if (!isConfigured(config)) {
     await showWizard();
     return;

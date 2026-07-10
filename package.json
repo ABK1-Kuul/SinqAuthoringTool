@@ -47,7 +47,7 @@
     "chalk": "^2.4.2",
     "compression": "^1.7.4",
     "configstore": "^3.1.2",
-    "connect-mongodb-session": "^5.0.0",
+    "connect-mongodb-session": "^2.4.1",
     "consolidate": "^0.15.1",
     "cookie-parser": "^1.4.6",
     "email-templates": "^8.1.0",
@@ -99,7 +99,11 @@
     "underscore": "^1.13.2",
     "unzipper": "^0.10.11",
     "winston": "^3.7.2",
-    "yauzl": "^2.10.0"
+    "yauzl": "^2.10.0",
+    "sqlite3": "^5.1.7",
+    "connect-sqlite3": "^0.9.15",
+    "pg": "^8.11.5",
+    "connect-pg-simple": "^9.0.1"
   },
   "devDependencies": {
     "cross-env": "^7.0.3",

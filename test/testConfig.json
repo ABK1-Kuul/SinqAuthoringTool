@@ -2,7 +2,7 @@
   "rootUrl": "http://localhost:5000",
   "serverName": "localhost",
   "serverPort": 5001,
-  "dbType": "mongoose",
+  "dbType": "sqlite",
   "dbHost": "localhost",
   "dbPort": 27017,
   "dbName": "adapt-tenant-mocha",

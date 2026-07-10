@@ -92,6 +92,13 @@ installHelpers.checkPrimaryDependencies(function(error) {
       database: {
         dbConfig: [
           {
+            name: 'dbType',
+            type: 'list',
+            message: 'Database type',
+            choices: ['sqlite', 'pg', 'mongoose'],
+            default: 'sqlite'
+          },
+          {
             name: 'dbName',
             type: 'input',
             message: 'Master database name',
@@ -102,7 +109,10 @@ installHelpers.checkPrimaryDependencies(function(error) {
             name: 'useConnectionUri',
             type: 'confirm',
             message: 'Will you be using a full database connection URI? (all connection options in the URI)',
-            default: false
+            default: false,
+            when: function(answers) {
+              return answers.dbType !== 'sqlite';
+            }
           }
         ],
         configureUri: [
@@ -350,8 +360,21 @@ function configureDatabase(callback) {
   installHelpers.getInput(inputData.database.dbConfig, configOverrides, function(result) {
     addConfig(result);
 
+    if (result.dbType === 'sqlite') {
+      return callback();
+    }
+
     var isStandard = !installHelpers.inputHelpers.toBoolean(result.useConnectionUri);
     var config = inputData.database[isStandard ? 'configureStandard' : 'configureUri'];
+
+    // Adjust port default dynamically for pg/mongoose
+    if (result.dbType === 'pg') {
+      var portPrompt = config.find(p => p.name === 'dbPort');
+      if (portPrompt) portPrompt.default = 5432;
+    } else {
+      var portPrompt = config.find(p => p.name === 'dbPort');
+      if (portPrompt) portPrompt.default = 27017;
+    }
 
     installHelpers.getInput(config, configOverrides, function(result) {
       addConfig(result);

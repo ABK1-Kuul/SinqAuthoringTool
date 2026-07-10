@@ -1,7 +1,6 @@
 var async = require('async');
 var fs = require('fs-extra');
 var path = require('path');
-var mongodb = require('mongodb');
 
 // Global wipe: drop test database before any tests run (prevents E11000 duplicate key errors)
 require('./globalSetup');
@@ -73,22 +72,40 @@ before(function(done) {
 after(function(done) {
   this.timeout(EXTENDED_TIMEOUT);
 
-  async.parallel([
-    function removePolicies(cb) {
-      permissions.clearPolicies(testData.testUser._id, cb);
+  async.series([
+    function runCleanup(cbSeries) {
+      async.parallel([
+        function removePolicies(cb) {
+          permissions.clearPolicies(testData.testUser._id, cb);
+        },
+        function removeUser(cb) {
+          usermanager.deleteUser({ _id: testData.testUser._id }, cb);
+        },
+        function removeTenant(cb) {
+          tenantmanager.deleteTenant({ _id: testData.testTenant._id }, cb);
+        },
+        function removeRoles(cb) {
+          app.rolemanager.retrieveRoles({}, {}, function(error, roles) {
+            async.each(roles, function(role, cb2) {
+              app.rolemanager.destroyRole(role._id, cb2);
+            }, cb);
+          });
+        }
+      ], cbSeries);
     },
-    function removeUser(cb) {
-      usermanager.deleteUser({ _id: testData.testUser._id }, cb);
-    },
-    function removeTenant(cb) {
-      tenantmanager.deleteTenant({ _id: testData.testTenant._id }, cb);
-    },
-    function removeRoles(cb) {
-      app.rolemanager.retrieveRoles({}, {}, function(error, roles) {
-        async.each(roles, function(role, cb2) {
-          app.rolemanager.destroyRole(role._id, cb2);
-        }, cb);
-      });
+    function closeDb(cbSeries) {
+      async.parallel([
+        function closeDatabases(cb) {
+          require('../lib/database').closeConnections(cb);
+        },
+        function closeSessionDb(cb) {
+          if (app.sessionStore && app.sessionStore.db && typeof app.sessionStore.db.close === 'function') {
+            app.sessionStore.db.close(cb);
+          } else {
+            cb();
+          }
+        }
+      ], cbSeries);
     },
     removeTestData
   ], done);
@@ -119,19 +136,41 @@ function createTestUser (userDetails, cb) {
 function removeTestData(done) {
   async.parallel([
     function dumpOldDb(cb) {
-      var MongoClient = mongodb.MongoClient;
-      var connStr = 'mongodb://' + testConfig.dbHost + ':' + testConfig.dbPort + '/' + testConfig.dbName;
-      MongoClient.connect(connStr, {}, function(error, client) {
-        if(error) return cb(error);
-
-        var db = client.db(testConfig.dbName);
-
-        db.dropDatabase(function(error, result) {
-          if(error) return cb(error);
-          client.close();
-          return cb();
+      if (testConfig.dbType === 'sqlite') {
+        return cb();
+      } else if (testConfig.dbType === 'pg') {
+        const { Client } = require('pg');
+        const temp = new Client({
+          user: testConfig.dbUser || 'postgres',
+          password: testConfig.dbPass || '',
+          host: testConfig.dbHost || 'localhost',
+          port: testConfig.dbPort || 5432,
+          database: 'postgres'
         });
-      });
+        temp.connect(function(err) {
+          if (err) return cb();
+          temp.query(`DROP DATABASE IF EXISTS "${testConfig.dbName}"`, function(errDrop) {
+            temp.end(function() {
+              cb(errDrop);
+            });
+          });
+        });
+      } else {
+        const mongodb = require('mongodb');
+        var MongoClient = mongodb.MongoClient;
+        var connStr = 'mongodb://' + testConfig.dbHost + ':' + testConfig.dbPort + '/' + testConfig.dbName;
+        MongoClient.connect(connStr, {}, function(error, client) {
+          if(error) return cb(error);
+
+          var db = client.db(testConfig.dbName);
+
+          db.dropDatabase(function(error, result) {
+            if(error) return cb(error);
+            client.close();
+            return cb();
+          });
+        });
+      }
     },
     function removeData(cb) {
       fs.remove(testConfig.dataRoot, cb);

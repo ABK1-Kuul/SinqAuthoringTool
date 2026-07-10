@@ -47,9 +47,12 @@ async function runInstallation(config, progressCallback) {
   const { core, smtp } = config;
 
   try {
-    // Step 1: Ensure MongoDB is running (assumed to be started by main process)
-    progress.update('Checking MongoDB connection...', 'info', 10);
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Step 1: Ensure DB is running (if mongoose is used)
+    const isMongoose = core.dbType === 'mongoose' || (!core.dbType && finalConfig?.dbType === 'mongoose');
+    if (isMongoose) {
+      progress.update('Checking MongoDB connection...', 'info', 10);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
 
     // Step 2: Get framework version (use from config or fetch latest)
     progress.update('Fetching framework version...', 'info', 15);
@@ -78,9 +81,7 @@ async function runInstallation(config, progressCallback) {
       serverPort: 3000,
       serverName: 'localhost',
       dataRoot: path.join(userDataPath, 'data'),
-      dbType: 'mongoose',
-      dbHost: core.dbHost || 'localhost',
-      dbPort: core.dbPort || 27017,
+      dbType: core.dbType || 'sqlite',
       dbName: 'adapt-tenant-master',
       outputPlugin: 'adapt',
       auth: 'local',
@@ -127,14 +128,16 @@ async function runInstallation(config, progressCallback) {
       dataRoot: finalConfig.dataRoot,
     });
 
-    // Step 6: Run migrations
-    progress.update('Running database migrations...', 'info', 40);
-    const conn = appInstance.db && appInstance.db.conn;
-    if (conn && conn.db) {
-      await migrationsService.runMigrations({
-        db: conn.db,
-        client: conn.client,
-      });
+    // Step 6: Run migrations (if mongoose)
+    if (finalConfig.dbType === 'mongoose') {
+      progress.update('Running database migrations...', 'info', 40);
+      const conn = appInstance.db && appInstance.db.conn;
+      if (conn && conn.db) {
+        await migrationsService.runMigrations({
+          db: conn.db,
+          client: conn.client,
+        });
+      }
     }
 
     // Step 7: Create master tenant
