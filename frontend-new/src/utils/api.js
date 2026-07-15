@@ -30,8 +30,8 @@ export const api = {
   // Content objects CRUD
   getContent: (type, query = {}) => client.get(`/api/content/${type}`, { params: query }),
   createContent: (type, data) => client.post(`/api/content/${type}`, data),
-  updateContent: (type, id, data) => client.put(`/api/content/${id}`, data),
-  deleteContent: (type, id) => client.delete(`/api/content/${id}`),
+  updateContent: (type, id, data) => client.put(`/api/content/${type}/${id}`, data),
+  deleteContent: (type, id) => client.delete(`/api/content/${type}/${id}`),
 
   // Course Preview
   previewCourse: (id) => client.get(`/api/output/adapt/preview/${id}`),

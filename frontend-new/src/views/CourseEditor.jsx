@@ -163,12 +163,27 @@ export default function CourseEditor({ courseId, user, onBack }) {
     }
   };
 
-  const handleFieldChange = async (field, value) => {
+  const SYSTEM_FIELDS = [
+    '_id', '_parentId', '_courseId', '_tenantId', '_type', '_sortOrder',
+    '_isSelected', '_hasPreview', '_shareWithUsers', 'createdAt', 'createdBy',
+    'updatedAt', 'updatedBy', '_latestTrackingId'
+  ];
+
+  const handleFieldChange = async (fieldPath, value) => {
     if (!selectedItem) return;
     const { type, data } = selectedItem;
     
-    // Update local state first for instant response
-    const updatedData = { ...data, [field]: value };
+    // Update local state, including support for nested fields (e.g. "_graphic.alt")
+    const updatedData = { ...data };
+    const parts = fieldPath.split('.');
+    
+    let current = updatedData;
+    for (let i = 0; i < parts.length - 1; i++) {
+      current[parts[i]] = { ...current[parts[i]] };
+      current = current[parts[i]];
+    }
+    current[parts[parts.length - 1]] = value;
+
     setSelectedItem({ type, data: updatedData });
 
     // Update outline lists
@@ -182,9 +197,12 @@ export default function CourseEditor({ courseId, user, onBack }) {
       }));
     }
 
-    // Persist to DB
+    // Persist to DB. We send the updated top-level field that changed to avoid nested partial update issues
+    const topLevelField = parts[0];
+    const updatePayload = { [topLevelField]: updatedData[topLevelField] };
+
     try {
-      await api.updateContent(type, data._id, { [field]: value });
+      await api.updateContent(type, data._id, updatePayload);
       
       // Real-time preview push: Send message to iframe to update dynamically
       const iframe = document.getElementById('preview-frame');
@@ -192,7 +210,7 @@ export default function CourseEditor({ courseId, user, onBack }) {
         iframe.contentWindow.postMessage({
           action: 'updateAttribute',
           id: data._id,
-          attribute: field,
+          attribute: fieldPath,
           value: value
         }, '*');
       }
@@ -202,19 +220,60 @@ export default function CourseEditor({ courseId, user, onBack }) {
   };
 
   // Simple Form Field Renderer based on Schema
-  const renderFormField = (key, prop, value) => {
-    if (key.startsWith('_') && key !== '_layout') return null; // skip internal system IDs
-    
+  const renderFormField = (key, prop, value, parentKey = '') => {
+    const fullPath = parentKey ? `${parentKey}.${key}` : key;
+    if (SYSTEM_FIELDS.includes(key)) return null;
+
+    // Handle nested object schemas
+    if (prop.type === 'object' && prop.properties) {
+      return (
+        <div key={fullPath} style={styles.fieldset}>
+          <h4 style={styles.fieldsetLegend}>{prop.title || key}</h4>
+          <div style={styles.fieldsetFields}>
+            {Object.keys(prop.properties).map(subKey => {
+              const subProp = prop.properties[subKey];
+              const subVal = value ? value[subKey] : undefined;
+              return renderFormField(subKey, subProp, subVal, fullPath);
+            })}
+          </div>
+        </div>
+      );
+    }
+
     const val = value !== undefined ? value : prop.default || '';
+
+    // Handle select dropdown choices (from enum or inputType: { type: "Select", options: [...] })
+    const isSelect = prop.inputType === 'Select' || (prop.inputType && typeof prop.inputType === 'object' && prop.inputType.type === 'Select');
+    const selectOptions = isSelect ? (prop.inputType.options || prop.enum || []) : null;
+
+    if (selectOptions) {
+      return (
+        <div key={fullPath} style={styles.formGroup}>
+          <label style={styles.formLabel}>{prop.title || key}</label>
+          <select
+            value={val}
+            onChange={(e) => handleFieldChange(fullPath, e.target.value)}
+            style={styles.select}
+          >
+            {selectOptions.map(opt => {
+              const optVal = typeof opt === 'object' ? (opt.value !== undefined ? opt.value : opt) : opt;
+              const optText = typeof opt === 'object' ? (opt.text || opt.value || opt) : opt;
+              return <option key={optVal} value={optVal}>{optText || optVal || '(none)'}</option>;
+            })}
+          </select>
+          {prop.help && <span style={styles.helpText}>{prop.help}</span>}
+        </div>
+      );
+    }
 
     if (prop.type === 'boolean') {
       return (
-        <div key={key} style={styles.formGroupRow}>
+        <div key={fullPath} style={styles.formGroupRow}>
           <label style={styles.formLabel}>{prop.title || key}</label>
           <input
             type="checkbox"
             checked={!!val}
-            onChange={(e) => handleFieldChange(key, e.target.checked)}
+            onChange={(e) => handleFieldChange(fullPath, e.target.checked)}
             style={styles.toggle}
           />
         </div>
@@ -223,12 +282,12 @@ export default function CourseEditor({ courseId, user, onBack }) {
 
     if (prop.type === 'number') {
       return (
-        <div key={key} style={styles.formGroup}>
+        <div key={fullPath} style={styles.formGroup}>
           <label style={styles.formLabel}>{prop.title || key}</label>
           <input
             type="number"
             value={val}
-            onChange={(e) => handleFieldChange(key, Number(e.target.value))}
+            onChange={(e) => handleFieldChange(fullPath, Number(e.target.value))}
             style={styles.input}
           />
           {prop.help && <span style={styles.helpText}>{prop.help}</span>}
@@ -237,12 +296,12 @@ export default function CourseEditor({ courseId, user, onBack }) {
     }
 
     return (
-      <div key={key} style={styles.formGroup}>
+      <div key={fullPath} style={styles.formGroup}>
         <label style={styles.formLabel}>{prop.title || key}</label>
         {prop.inputType === 'TextArea' ? (
           <textarea
             value={val}
-            onChange={(e) => handleFieldChange(key, e.target.value)}
+            onChange={(e) => handleFieldChange(fullPath, e.target.value)}
             style={styles.textarea}
             rows={4}
           />
@@ -250,7 +309,7 @@ export default function CourseEditor({ courseId, user, onBack }) {
           <input
             type="text"
             value={val}
-            onChange={(e) => handleFieldChange(key, e.target.value)}
+            onChange={(e) => handleFieldChange(fullPath, e.target.value)}
             style={styles.input}
           />
         )}
@@ -339,6 +398,7 @@ export default function CourseEditor({ courseId, user, onBack }) {
                 return (
                   <div key={page._id} style={styles.treeGroup}>
                     <div 
+                      className="tree-node"
                       onClick={() => setSelectedItem({ type: 'contentobject', data: page })}
                       style={{
                         ...styles.treeNode,
@@ -351,7 +411,7 @@ export default function CourseEditor({ courseId, user, onBack }) {
                       </button>
                       <FileText size={14} />
                       <span style={styles.nodeTitle}>{page.title || 'Page'}</span>
-                      <div style={styles.nodeActions}>
+                      <div className="node-actions" style={styles.nodeActions}>
                         <button onClick={() => addArticle(page._id)} style={styles.addBtn} title="Add Article">
                           <Plus size={12} />
                         </button>
@@ -369,6 +429,7 @@ export default function CourseEditor({ courseId, user, onBack }) {
                       return (
                         <div key={article._id} style={styles.treeGroupNested}>
                           <div 
+                            className="tree-node"
                             onClick={() => setSelectedItem({ type: 'article', data: article })}
                             style={{
                               ...styles.treeNode,
@@ -380,7 +441,7 @@ export default function CourseEditor({ courseId, user, onBack }) {
                               {articleExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                             </button>
                             <span style={styles.nodeTitle}>{article.title || 'Article'}</span>
-                            <div style={styles.nodeActions}>
+                            <div className="node-actions" style={styles.nodeActions}>
                               <button onClick={() => addBlock(article._id)} style={styles.addBtn} title="Add Block">
                                 <Plus size={12} />
                               </button>
@@ -391,6 +452,7 @@ export default function CourseEditor({ courseId, user, onBack }) {
                           </div>
 
                           {/* Blocks */}
+                          {articleExpanded && blockArticles.map && (console.warn('blockArticles?')) /* wait, blockArticles was blockComponents? let's make sure block code is original */}
                           {articleExpanded && articleBlocks.map(block => {
                             const blockExpanded = !!expandedNodes[block._id];
                             const blockComponents = outline.components.filter(c => c._parentId === block._id);
@@ -398,6 +460,7 @@ export default function CourseEditor({ courseId, user, onBack }) {
                             return (
                               <div key={block._id} style={styles.treeGroupNested}>
                                 <div 
+                                  className="tree-node"
                                   onClick={() => setSelectedItem({ type: 'block', data: block })}
                                   style={{
                                     ...styles.treeNode,
@@ -409,7 +472,7 @@ export default function CourseEditor({ courseId, user, onBack }) {
                                     {blockExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                                   </button>
                                   <span style={styles.nodeTitle}>{block.title || 'Block'}</span>
-                                  <div style={styles.nodeActions}>
+                                  <div className="node-actions" style={styles.nodeActions}>
                                     <button onClick={() => addComponent(block._id, 'text')} style={styles.addBtn} title="Add Text Component">
                                       <Plus size={12} />
                                     </button>
@@ -423,6 +486,7 @@ export default function CourseEditor({ courseId, user, onBack }) {
                                 {blockExpanded && blockComponents.map(comp => (
                                   <div 
                                     key={comp._id}
+                                    className="tree-node"
                                     onClick={() => setSelectedItem({ type: 'component', data: comp })}
                                     style={{
                                       ...styles.treeNode,
@@ -433,9 +497,11 @@ export default function CourseEditor({ courseId, user, onBack }) {
                                     <Square size={12} style={{color: 'var(--accent-color)'}} />
                                     <span style={styles.nodeTitle}>{comp.title || 'Component'}</span>
                                     <span style={styles.nodeTypeTag}>{comp._component}</span>
-                                    <button onClick={(e) => handleDeleteItem(e, 'component', comp._id)} style={styles.nodeDeleteBtn}>
-                                      <Trash2 size={12} />
-                                    </button>
+                                    <div className="node-actions" style={styles.nodeActions}>
+                                      <button onClick={(e) => handleDeleteItem(e, 'component', comp._id)} style={styles.nodeDeleteBtn}>
+                                        <Trash2 size={12} />
+                                      </button>
+                                    </div>
                                   </div>
                                 ))}
                               </div>
@@ -751,6 +817,36 @@ const styles = {
     fontSize: '11px',
     color: 'var(--text-muted)',
     lineHeight: '130%',
+  },
+  select: {
+    width: '100%',
+    padding: '10px 12px',
+    backgroundColor: 'var(--bg-tertiary)',
+    border: '1px solid var(--border-color)',
+    borderRadius: 'var(--border-radius-sm)',
+    color: 'var(--text-primary)',
+    fontSize: '14px',
+    outline: 'none',
+  },
+  fieldset: {
+    border: '1px solid var(--border-color)',
+    borderRadius: 'var(--border-radius-sm)',
+    padding: '16px',
+    margin: '8px 0',
+    backgroundColor: 'var(--bg-primary)',
+  },
+  fieldsetLegend: {
+    fontSize: '12px',
+    fontWeight: '600',
+    color: 'var(--accent-color)',
+    textTransform: 'uppercase',
+    marginBottom: '12px',
+    letterSpacing: '0.5px',
+  },
+  fieldsetFields: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
   },
   // Preview styles
   previewPanel: {
