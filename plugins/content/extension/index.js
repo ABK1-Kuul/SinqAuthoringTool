@@ -190,7 +190,7 @@ function contentCreationHook (contentType, data, cb) {
               return callback('Unexpected number of componentType records');
             }
 
-            var componentType = results[0]._doc;
+            var componentType = results[0]._doc || results[0];
 
             if (componentType.globals) {
               // The component has globals.
@@ -202,7 +202,7 @@ function contentCreationHook (contentType, data, cb) {
                   }
 
                   var key = '_' + componentType.component;
-                  var courseDoc = results[0]._doc;
+                  var courseDoc = results[0]._doc || results[0];
                   var courseGlobals = courseDoc._globals
                     ? courseDoc._globals
                     : {};
@@ -384,7 +384,7 @@ function toggleExtensions (courseId, action, extensions, cb) {
                 return cb(err);
               }
 
-              var courseDoc = results[0]._doc;
+              var courseDoc = results[0]._doc || results[0];
               var key = '_' + extensionItem.extension;
               // Extract the global defaults
               var courseGlobals = courseDoc._globals
