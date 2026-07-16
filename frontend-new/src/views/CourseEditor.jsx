@@ -452,7 +452,6 @@ export default function CourseEditor({ courseId, user, onBack }) {
                           </div>
 
                           {/* Blocks */}
-                          {articleExpanded && blockArticles.map && (console.warn('blockArticles?')) /* wait, blockArticles was blockComponents? let's make sure block code is original */}
                           {articleExpanded && articleBlocks.map(block => {
                             const blockExpanded = !!expandedNodes[block._id];
                             const blockComponents = outline.components.filter(c => c._parentId === block._id);
