@@ -26,6 +26,14 @@ export default function CourseEditor({ courseId, user, onBack }) {
     advanced: false
   });
   const [previewDevice, setPreviewDevice] = useState('desktop'); // desktop, tablet, mobile
+  const [toolbarPosition, setToolbarPosition] = useState({
+    visible: false,
+    top: 0,
+    left: 0,
+    elementId: '',
+    elementType: ''
+  });
+  const [draggedItem, setDraggedItem] = useState(null); // { type, id, parentId }
 
   useEffect(() => {
     loadEditorData();
@@ -243,6 +251,113 @@ export default function CourseEditor({ courseId, user, onBack }) {
     }
   };
 
+  const handleIframeLoad = () => {
+    const iframe = document.getElementById('preview-frame');
+    if (!iframe) return;
+
+    try {
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+      if (!iframeDoc) return;
+
+      iframeDoc.addEventListener('scroll', () => {
+        setToolbarPosition(prev => ({ ...prev, visible: false }));
+      });
+
+      iframeDoc.addEventListener('click', (e) => {
+        const target = e.target;
+        const closestEl = target.closest('.component, .block, .article, .page, .contentobject');
+        
+        if (closestEl) {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          const id = closestEl.getAttribute('id') || closestEl.getAttribute('data-id');
+          if (!id) return;
+
+          const className = closestEl.className;
+          let type = '';
+          if (className.includes('component')) type = 'component';
+          else if (className.includes('block')) type = 'block';
+          else if (className.includes('article')) type = 'article';
+          else if (className.includes('page') || className.includes('contentobject')) type = 'contentobject';
+
+          if (type) {
+            let data = null;
+            if (type === 'contentobject') {
+              data = outline.pages.find(p => p._id === id);
+            } else {
+              const key = type === 'contentobject' ? 'pages' : type + 's';
+              data = outline[key]?.find(item => item._id === id);
+            }
+
+            if (data) {
+              setSelectedItem({ type, data });
+              
+              const rect = closestEl.getBoundingClientRect();
+              const iframeRect = iframe.getBoundingClientRect();
+              
+              setToolbarPosition({
+                visible: true,
+                top: iframeRect.top + rect.top - 48,
+                left: iframeRect.left + rect.left + (rect.width / 2) - 120,
+                elementId: id,
+                elementType: type
+              });
+            }
+          }
+        } else {
+          setToolbarPosition(prev => ({ ...prev, visible: false }));
+        }
+      }, true);
+    } catch (err) {
+      console.warn('Cannot attach iframe click handlers:', err);
+    }
+  };
+
+  const handleQuickStyleChange = async (styleKey, value) => {
+    if (!toolbarPosition.visible || !selectedItem) return;
+    const { type, data } = selectedItem;
+    
+    let updatePayload = {};
+    if (styleKey === '_layout') {
+      updatePayload = { _layout: value };
+    } else if (styleKey === 'alignment') {
+      let classes = data._classes || '';
+      classes = classes.replace(/\balign-(left|center|right)\b/g, '').trim();
+      classes = `${classes} align-${value}`.trim();
+      updatePayload = { _classes: classes };
+    }
+
+    try {
+      await api.updateContent(type, data._id, updatePayload);
+      
+      const updatedData = { ...data, ...updatePayload };
+      setSelectedItem({ type, data: updatedData });
+      
+      if (type === 'course') {
+        setCourse(updatedData);
+      } else {
+        const key = type === 'contentobject' ? 'pages' : type + 's';
+        setOutline(prev => ({
+          ...prev,
+          [key]: prev[key].map(item => item._id === data._id ? updatedData : item)
+        }));
+      }
+
+      const iframe = document.getElementById('preview-frame');
+      if (iframe?.contentWindow) {
+        iframe.contentWindow.postMessage({
+          action: 'updateAttribute',
+          id: data._id,
+          attribute: styleKey === 'alignment' ? '_classes' : styleKey,
+          value: updatePayload._classes || value
+        }, '*');
+      }
+    } catch (e) {
+      console.error('Failed to apply quick style change:', e);
+    }
+  };
+
   const getSimpleFieldsForType = (type) => {
     if (type === 'course') return ['title', 'displayTitle', 'description', 'body', 'heroImage', '_themePreset'];
     if (type === 'contentobject') return ['title', 'description', 'body'];
@@ -264,6 +379,55 @@ export default function CourseEditor({ courseId, user, onBack }) {
 
   const toggleAccordion = (section) => {
     setOpenAccordions(prev => ({ ...prev, [section]: !prev[section] }));
+  };
+
+  const handleDragStart = (e, type, id, parentId) => {
+    setDraggedItem({ type, id, parentId });
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e, type, parentId) => {
+    if (draggedItem && draggedItem.type === type && draggedItem.parentId === parentId) {
+      e.preventDefault();
+    }
+  };
+
+  const handleDrop = async (e, targetId) => {
+    e.preventDefault();
+    if (!draggedItem || draggedItem.id === targetId) return;
+
+    const { type, id, parentId } = draggedItem;
+    const key = type === 'contentobject' ? 'pages' : type + 's';
+    const list = outline[key];
+
+    const draggedIndex = list.findIndex(item => item._id === id);
+    const targetIndex = list.findIndex(item => item._id === targetId);
+
+    if (draggedIndex !== -1 && targetIndex !== -1) {
+      const newList = [...list];
+      const [removed] = newList.splice(draggedIndex, 1);
+      newList.splice(targetIndex, 0, removed);
+
+      newList.forEach((item, index) => {
+        item._sortOrder = index;
+      });
+
+      setOutline(prev => ({
+        ...prev,
+        [key]: newList
+      }));
+
+      try {
+        await Promise.all([
+          api.updateContent(type, id, { _sortOrder: targetIndex }),
+          api.updateContent(type, targetId, { _sortOrder: draggedIndex })
+        ]);
+        handleRebuildPreview();
+      } catch (err) {
+        console.error('Failed to save sort order:', err);
+      }
+    }
+    setDraggedItem(null);
   };
 
   // Simple Form Field Renderer based on Schema
@@ -610,127 +774,160 @@ export default function CourseEditor({ courseId, user, onBack }) {
               </div>
 
               {/* Pages */}
-              {outline.pages.map(page => {
-                const pageExpanded = !!expandedNodes[page._id];
-                const pageArticles = outline.articles.filter(a => a._parentId === page._id);
+              {[...outline.pages]
+                .sort((a, b) => (a._sortOrder || 0) - (b._sortOrder || 0))
+                .map(page => {
+                  const pageExpanded = !!expandedNodes[page._id];
+                  const pageArticles = [...outline.articles]
+                    .filter(a => a._parentId === page._id)
+                    .sort((a, b) => (a._sortOrder || 0) - (b._sortOrder || 0));
 
-                return (
-                  <div key={page._id} style={styles.treeGroup}>
+                  return (
                     <div 
-                      className="tree-node"
-                      onClick={() => setSelectedItem({ type: 'contentobject', data: page })}
-                      style={{
-                        ...styles.treeNode,
-                        ...styles.pageNode,
-                        ...(selectedItem?.data?._id === page._id ? styles.selectedTreeNode : {})
-                      }}
+                      key={page._id} 
+                      style={styles.treeGroup}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, 'contentobject', page._id, courseId)}
+                      onDragOver={(e) => handleDragOver(e, 'contentobject', courseId)}
+                      onDrop={(e) => handleDrop(e, page._id)}
                     >
-                      <button onClick={(e) => { e.stopPropagation(); toggleNode(page._id); }} style={styles.expandBtn}>
-                        {pageExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                      </button>
-                      <FileText size={14} />
-                      <span style={styles.nodeTitle}>{page.title || 'Page'}</span>
-                      <div className="node-actions" style={styles.nodeActions}>
-                        <button onClick={() => addArticle(page._id)} style={styles.addBtn} title="Add Article">
-                          <Plus size={12} />
+                      <div 
+                        className="tree-node"
+                        onClick={() => setSelectedItem({ type: 'contentobject', data: page })}
+                        style={{
+                          ...styles.treeNode,
+                          ...styles.pageNode,
+                          ...(selectedItem?.data?._id === page._id ? styles.selectedTreeNode : {})
+                        }}
+                      >
+                        <button onClick={(e) => { e.stopPropagation(); toggleNode(page._id); }} style={styles.expandBtn}>
+                          {pageExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                         </button>
-                        <button onClick={(e) => handleDeleteItem(e, 'contentobject', page._id)} style={styles.nodeDeleteBtn}>
-                          <Trash2 size={12} />
-                        </button>
+                        <FileText size={14} />
+                        <span style={styles.nodeTitle}>{page.title || 'Page'}</span>
+                        <div className="node-actions" style={styles.nodeActions}>
+                          <button onClick={() => addArticle(page._id)} style={styles.addBtn} title="Add Article">
+                            <Plus size={12} />
+                          </button>
+                          <button onClick={(e) => handleDeleteItem(e, 'contentobject', page._id)} style={styles.nodeDeleteBtn}>
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
                       </div>
-                    </div>
 
-                    {/* Articles */}
-                    {pageExpanded && pageArticles.map(article => {
-                      const articleExpanded = !!expandedNodes[article._id];
-                      const articleBlocks = outline.blocks.filter(b => b._parentId === article._id);
+                      {/* Articles */}
+                      {pageExpanded && pageArticles.map(article => {
+                        const articleExpanded = !!expandedNodes[article._id];
+                        const articleBlocks = [...outline.blocks]
+                          .filter(b => b._parentId === article._id)
+                          .sort((a, b) => (a._sortOrder || 0) - (b._sortOrder || 0));
 
-                      return (
-                        <div key={article._id} style={styles.treeGroupNested}>
+                        return (
                           <div 
-                            className="tree-node"
-                            onClick={() => setSelectedItem({ type: 'article', data: article })}
-                            style={{
-                              ...styles.treeNode,
-                              ...styles.articleNode,
-                              ...(selectedItem?.data?._id === article._id ? styles.selectedTreeNode : {})
-                            }}
+                            key={article._id} 
+                            style={styles.treeGroupNested}
+                            draggable
+                            onDragStart={(e) => handleDragStart(e, 'article', article._id, page._id)}
+                            onDragOver={(e) => handleDragOver(e, 'article', page._id)}
+                            onDrop={(e) => handleDrop(e, article._id)}
                           >
-                            <button onClick={(e) => { e.stopPropagation(); toggleNode(article._id); }} style={styles.expandBtn}>
-                              {articleExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                            </button>
-                            <span style={styles.nodeTitle}>{article.title || 'Article'}</span>
-                            <div className="node-actions" style={styles.nodeActions}>
-                              <button onClick={() => addBlock(article._id)} style={styles.addBtn} title="Add Block">
-                                <Plus size={12} />
+                            <div 
+                              className="tree-node"
+                              onClick={() => setSelectedItem({ type: 'article', data: article })}
+                              style={{
+                                ...styles.treeNode,
+                                ...styles.articleNode,
+                                ...(selectedItem?.data?._id === article._id ? styles.selectedTreeNode : {})
+                              }}
+                            >
+                              <button onClick={(e) => { e.stopPropagation(); toggleNode(article._id); }} style={styles.expandBtn}>
+                                {articleExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                               </button>
-                              <button onClick={(e) => handleDeleteItem(e, 'article', article._id)} style={styles.nodeDeleteBtn}>
-                                <Trash2 size={12} />
-                              </button>
+                              <span style={styles.nodeTitle}>{article.title || 'Article'}</span>
+                              <div className="node-actions" style={styles.nodeActions}>
+                                <button onClick={() => addBlock(article._id)} style={styles.addBtn} title="Add Block">
+                                  <Plus size={12} />
+                                </button>
+                                <button onClick={(e) => handleDeleteItem(e, 'article', article._id)} style={styles.nodeDeleteBtn}>
+                                  <Trash2 size={12} />
+                                </button>
+                              </div>
                             </div>
-                          </div>
 
-                          {/* Blocks */}
-                          {articleExpanded && articleBlocks.map(block => {
-                            const blockExpanded = !!expandedNodes[block._id];
-                            const blockComponents = outline.components.filter(c => c._parentId === block._id);
+                            {/* Blocks */}
+                            {articleExpanded && articleBlocks.map(block => {
+                              const blockExpanded = !!expandedNodes[block._id];
+                              const blockComponents = [...outline.components]
+                                .filter(c => c._parentId === block._id)
+                                .sort((a, b) => (a._sortOrder || 0) - (b._sortOrder || 0));
 
-                            return (
-                              <div key={block._id} style={styles.treeGroupNested}>
+                              return (
                                 <div 
-                                  className="tree-node"
-                                  onClick={() => setSelectedItem({ type: 'block', data: block })}
-                                  style={{
-                                    ...styles.treeNode,
-                                    ...styles.blockNode,
-                                    ...(selectedItem?.data?._id === block._id ? styles.selectedTreeNode : {})
-                                  }}
+                                  key={block._id} 
+                                  style={styles.treeGroupNested}
+                                  draggable
+                                  onDragStart={(e) => handleDragStart(e, 'block', block._id, article._id)}
+                                  onDragOver={(e) => handleDragOver(e, 'block', article._id)}
+                                  onDrop={(e) => handleDrop(e, block._id)}
                                 >
-                                  <button onClick={(e) => { e.stopPropagation(); toggleNode(block._id); }} style={styles.expandBtn}>
-                                    {blockExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                                  </button>
-                                  <span style={styles.nodeTitle}>{block.title || 'Block'}</span>
-                                  <div className="node-actions" style={styles.nodeActions}>
-                                    <button onClick={() => addComponent(block._id, 'text')} style={styles.addBtn} title="Add Text Component">
-                                      <Plus size={12} />
-                                    </button>
-                                    <button onClick={(e) => handleDeleteItem(e, 'block', block._id)} style={styles.nodeDeleteBtn}>
-                                      <Trash2 size={12} />
-                                    </button>
-                                  </div>
-                                </div>
-
-                                {/* Components */}
-                                {blockExpanded && blockComponents.map(comp => (
                                   <div 
-                                    key={comp._id}
                                     className="tree-node"
-                                    onClick={() => setSelectedItem({ type: 'component', data: comp })}
+                                    onClick={() => setSelectedItem({ type: 'block', data: block })}
                                     style={{
                                       ...styles.treeNode,
-                                      ...styles.compNode,
-                                      ...(selectedItem?.data?._id === comp._id ? styles.selectedTreeNode : {})
+                                      ...styles.blockNode,
+                                      ...(selectedItem?.data?._id === block._id ? styles.selectedTreeNode : {})
                                     }}
                                   >
-                                    <Square size={12} style={{color: 'var(--accent-color)'}} />
-                                    <span style={styles.nodeTitle}>{comp.title || 'Component'}</span>
-                                    <span style={styles.nodeTypeTag}>{comp._component}</span>
+                                    <button onClick={(e) => { e.stopPropagation(); toggleNode(block._id); }} style={styles.expandBtn}>
+                                      {blockExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                                    </button>
+                                    <span style={styles.nodeTitle}>{block.title || 'Block'}</span>
                                     <div className="node-actions" style={styles.nodeActions}>
-                                      <button onClick={(e) => handleDeleteItem(e, 'component', comp._id)} style={styles.nodeDeleteBtn}>
+                                      <button onClick={() => addComponent(block._id, 'text')} style={styles.addBtn} title="Add Text Component">
+                                        <Plus size={12} />
+                                      </button>
+                                      <button onClick={(e) => handleDeleteItem(e, 'block', block._id)} style={styles.nodeDeleteBtn}>
                                         <Trash2 size={12} />
                                       </button>
                                     </div>
                                   </div>
-                                ))}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              })}
+
+                                  {/* Components */}
+                                  {blockExpanded && blockComponents.map(comp => (
+                                    <div 
+                                      key={comp._id}
+                                      className="tree-node"
+                                      onClick={() => setSelectedItem({ type: 'component', data: comp })}
+                                      style={{
+                                        ...styles.treeNode,
+                                        ...styles.compNode,
+                                        ...(selectedItem?.data?._id === comp._id ? styles.selectedTreeNode : {})
+                                      }}
+                                      draggable
+                                      onDragStart={(e) => handleDragStart(e, 'component', comp._id, block._id)}
+                                      onDragOver={(e) => handleDragOver(e, 'component', block._id)}
+                                      onDrop={(e) => handleDrop(e, comp._id)}
+                                    >
+                                      <Square size={12} style={{color: 'var(--accent-color)'}} />
+                                      <span style={styles.nodeTitle}>{comp.title || 'Component'}</span>
+                                      <span style={styles.nodeTypeTag}>{comp._component}</span>
+                                      <div className="node-actions" style={styles.nodeActions}>
+                                        <button onClick={(e) => handleDeleteItem(e, 'component', comp._id)} style={styles.nodeDeleteBtn}>
+                                          <Trash2 size={12} />
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
             </div>
           ) : (
             /* Settings Form Builder */
@@ -796,6 +993,7 @@ export default function CourseEditor({ courseId, user, onBack }) {
                 src={previewUrl}
                 style={styles.previewIframe}
                 title="Course Live Preview Canvas"
+                onLoad={handleIframeLoad}
               />
             </div>
           ) : (
@@ -806,6 +1004,108 @@ export default function CourseEditor({ courseId, user, onBack }) {
           )}
         </div>
       </div>
+
+      {/* Floating Contextual Toolbar */}
+      {toolbarPosition.visible && (
+        <div 
+          style={{
+            ...styles.floatingToolbar,
+            top: toolbarPosition.top,
+            left: toolbarPosition.left
+          }}
+        >
+          {toolbarPosition.elementType === 'component' && (
+            <>
+              <button 
+                onClick={() => handleQuickStyleChange('_layout', 'full')}
+                style={{
+                  ...styles.toolbarBtn,
+                  ...(selectedItem?.data?._layout === 'full' ? styles.toolbarBtnActive : {})
+                }}
+                title="Full Width"
+              >
+                ↔️
+              </button>
+              <button 
+                onClick={() => handleQuickStyleChange('_layout', 'left')}
+                style={{
+                  ...styles.toolbarBtn,
+                  ...(selectedItem?.data?._layout === 'left' ? styles.toolbarBtnActive : {})
+                }}
+                title="Left Align"
+              >
+                ⬅️
+              </button>
+              <button 
+                onClick={() => handleQuickStyleChange('_layout', 'right')}
+                style={{
+                  ...styles.toolbarBtn,
+                  ...(selectedItem?.data?._layout === 'right' ? styles.toolbarBtnActive : {})
+                }}
+                title="Right Align"
+              >
+                ➡️
+              </button>
+              <div style={styles.toolbarDivider} />
+            </>
+          )}
+
+          <button 
+            onClick={() => handleQuickStyleChange('alignment', 'left')}
+            style={{
+              ...styles.toolbarBtn,
+              ...(selectedItem?.data?._classes?.includes('align-left') ? styles.toolbarBtnActive : {})
+            }}
+            title="Text Left"
+          >
+            左
+          </button>
+          <button 
+            onClick={() => handleQuickStyleChange('alignment', 'center')}
+            style={{
+              ...styles.toolbarBtn,
+              ...(selectedItem?.data?._classes?.includes('align-center') ? styles.toolbarBtnActive : {})
+            }}
+            title="Text Center"
+          >
+            中
+          </button>
+          <button 
+            onClick={() => handleQuickStyleChange('alignment', 'right')}
+            style={{
+              ...styles.toolbarBtn,
+              ...(selectedItem?.data?._classes?.includes('align-right') ? styles.toolbarBtnActive : {})
+            }}
+            title="Text Right"
+          >
+            右
+          </button>
+
+          <div style={styles.toolbarDivider} />
+
+          <button 
+            onClick={() => {
+              setActiveTab('config');
+              setInspectorMode('simple');
+            }}
+            style={styles.toolbarBtn}
+            title="Edit Settings"
+          >
+            ⚙️
+          </button>
+
+          <button 
+            onClick={(e) => {
+              handleDeleteItem(e, selectedItem.type, selectedItem.data._id);
+              setToolbarPosition(prev => ({ ...prev, visible: false }));
+            }}
+            style={{...styles.toolbarBtn, ...styles.toolbarBtnDanger}}
+            title="Delete Item"
+          >
+            🗑️
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -1313,6 +1613,46 @@ const styles = {
     backgroundColor: '#333',
     margin: '6px auto 10px auto',
     flexShrink: 0,
+  },
+  floatingToolbar: {
+    position: 'absolute',
+    zIndex: 1000,
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4px',
+    backgroundColor: '#18181b', // dark charcoal
+    border: '1px solid #27272a',
+    borderRadius: '8px',
+    padding: '4px 6px',
+    boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+    transition: 'all 0.1s ease',
+  },
+  toolbarBtn: {
+    background: 'none',
+    border: 'none',
+    color: '#a1a1aa',
+    width: '28px',
+    height: '28px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '13px',
+    transition: 'all 0.15s ease',
+  },
+  toolbarBtnActive: {
+    backgroundColor: 'var(--accent-color)',
+    color: '#ffffff',
+  },
+  toolbarBtnDanger: {
+    color: 'var(--color-danger)',
+  },
+  toolbarDivider: {
+    width: '1px',
+    height: '16px',
+    backgroundColor: '#27272a',
+    margin: '0 4px',
   },
 };
 
