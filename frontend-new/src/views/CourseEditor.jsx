@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
   ArrowLeft, Play, RefreshCw, Layers, FileText, Square, 
-  HelpCircle, Settings, Plus, Trash2, Edit3, Save, ChevronRight, ChevronDown 
+  HelpCircle, Settings, Plus, Trash2, Edit3, Save, ChevronRight, ChevronDown,
+  Monitor, Smartphone, Tablet
 } from 'lucide-react';
 import { api } from '../utils/api';
 
@@ -24,6 +25,7 @@ export default function CourseEditor({ courseId, user, onBack }) {
     accessibility: false,
     advanced: false
   });
+  const [previewDevice, setPreviewDevice] = useState('desktop'); // desktop, tablet, mobile
 
   useEffect(() => {
     loadEditorData();
@@ -748,6 +750,31 @@ export default function CourseEditor({ courseId, user, onBack }) {
       <div style={styles.previewPanel}>
         <div style={styles.previewHeader}>
           <span style={styles.previewLabel}>Interactive Live Preview</span>
+          
+          <div style={styles.deviceSwitcher}>
+            <button 
+              onClick={() => setPreviewDevice('desktop')}
+              style={{...styles.deviceBtn, ...(previewDevice === 'desktop' ? styles.deviceBtnActive : {})}}
+              title="Desktop View"
+            >
+              <Monitor size={14} />
+            </button>
+            <button 
+              onClick={() => setPreviewDevice('tablet')}
+              style={{...styles.deviceBtn, ...(previewDevice === 'tablet' ? styles.deviceBtnActive : {})}}
+              title="Tablet View"
+            >
+              <Tablet size={14} />
+            </button>
+            <button 
+              onClick={() => setPreviewDevice('mobile')}
+              style={{...styles.deviceBtn, ...(previewDevice === 'mobile' ? styles.deviceBtnActive : {})}}
+              title="Mobile View"
+            >
+              <Smartphone size={14} />
+            </button>
+          </div>
+
           {previewLoading && (
             <div style={styles.previewLoadingIndicator}>
               <RefreshCw size={12} style={styles.spinIcon} />
@@ -757,12 +784,20 @@ export default function CourseEditor({ courseId, user, onBack }) {
         </div>
         <div style={styles.iframeWrapper}>
           {previewUrl ? (
-            <iframe
-              id="preview-frame"
-              src={previewUrl}
-              style={styles.previewIframe}
-              title="Course Live Preview Canvas"
-            />
+            <div 
+              style={{
+                ...styles.deviceFrame,
+                ...styles[`deviceFrame_${previewDevice}`]
+              }}
+            >
+              {previewDevice !== 'desktop' && <div style={styles.deviceCamera} />}
+              <iframe
+                id="preview-frame"
+                src={previewUrl}
+                style={styles.previewIframe}
+                title="Course Live Preview Canvas"
+              />
+            </div>
           ) : (
             <div style={styles.previewEmpty}>
               <RefreshCw size={36} />
@@ -1090,7 +1125,12 @@ const styles = {
   iframeWrapper: {
     flexGrow: 1,
     position: 'relative',
-    backgroundColor: '#ffffff',
+    backgroundColor: 'var(--bg-tertiary)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '24px',
+    overflow: 'auto',
   },
   previewIframe: {
     width: '100%',
@@ -1215,6 +1255,64 @@ const styles = {
     flexDirection: 'column',
     gap: '12px',
     backgroundColor: 'var(--bg-secondary)',
+  },
+  deviceSwitcher: {
+    display: 'flex',
+    gap: '4px',
+    backgroundColor: 'var(--bg-tertiary)',
+    padding: '4px',
+    borderRadius: 'var(--border-radius-sm)',
+  },
+  deviceBtn: {
+    padding: '4px 8px',
+    backgroundColor: 'transparent',
+    border: 'none',
+    color: 'var(--text-muted)',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    borderRadius: '4px',
+    transition: 'var(--transition-smooth)',
+  },
+  deviceBtnActive: {
+    color: 'var(--accent-color)',
+    backgroundColor: 'var(--bg-primary)',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+  },
+  deviceFrame: {
+    position: 'relative',
+    backgroundColor: '#ffffff',
+    boxShadow: '0 12px 36px rgba(0,0,0,0.15)',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+  },
+  deviceFrame_desktop: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 0,
+    border: 'none',
+  },
+  deviceFrame_tablet: {
+    width: '768px',
+    height: '95%',
+    borderRadius: '24px',
+    border: '14px solid #1a1a1a',
+  },
+  deviceFrame_mobile: {
+    width: '375px',
+    height: '90%',
+    borderRadius: '36px',
+    border: '14px solid #1a1a1a',
+  },
+  deviceCamera: {
+    width: '48px',
+    height: '6px',
+    borderRadius: '3px',
+    backgroundColor: '#333',
+    margin: '6px auto 10px auto',
+    flexShrink: 0,
   },
 };
 
