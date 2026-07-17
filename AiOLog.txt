@@ -1,0 +1,85 @@
+# Figma-Style Course Editor UI/UX Specification
+
+This document details the refined user experience for the SINQ Course Builder, transforming the configuration form into a visual, interactive editor with a floating toolbar and Figma-style property panels.
+
+![Visual Editor Mockup](/C:/Users/admin/.gemini/antigravity-ide/brain/913d0cee-bb1d-4626-8a3b-3f20a7b24593/visual_editor_mockup_1784283122168.png)
+
+---
+
+## 1. Visual Sandbox & Floating Contextual Toolbar
+
+When an author clicks on any section (Article/Block/Component) in the live preview sandbox, a **Floating Contextual Toolbar** appears directly above the selected element.
+
+```
+       ┌────────────────────────────────────────────────────────┐
+       │  Text  │  B  │  I  │  U  │  🎨 Text  │  🎨 BG  │  ⚙️ Settings │
+       └────────────────────────────────────────────────────────┘
+                                 │
+                                 ▼
+       ┌────────────────────────────────────────────────────────┐
+       │ This is an editable text block inside the live sandbox│
+       └────────────────────────────────────────────────────────┘
+```
+
+### Toolbar Elements & Actions
+1.  **Format Selector**: Dropdown to change element type (e.g., Heading 1, Heading 2, Paragraph).
+2.  **Basic Typography**: Buttons for **Bold**, *Italic*, and Underline.
+3.  **Visual Styling Pickers**:
+    *   **Text Color Picker**: Popover color grid with theme-matching colors.
+    *   **Background Color Picker**: Quickly toggle between light, dark, neutral, or transparent container backgrounds.
+4.  **Layout Shift Controls**: Arrow buttons to shift the block up or down instantly.
+5.  **Settings Shortcut (Gear Icon)**: Focuses the right-hand sidebar inspector on the selected element's detailed settings.
+
+---
+
+## 2. Figma-Style Inspector Sidebar (Right Panel)
+
+Instead of a long, schema-generated list of input fields, the right sidebar acts as an **Object Inspector** that adapts to what is currently selected.
+
+```
+┌──────────────────────────────────────┐
+│  INSPECTOR                  ⚙️ preset │
+├──────────────────────────────────────┤
+│ 👤 Course Admin Settings             │
+├──────────────────────────────────────┤
+│ ▼ Typography                         │
+│   Font:   [ Inter         ] [ 16px ] │
+│   Color:  [ #1a1a1a ]   Align: [≡]  │
+├──────────────────────────────────────┤
+│ ▼ Layout & Spacing                   │
+│   Width:  [ Full (100%)            ] │
+│   Padding: [|||     |     ] 24px     │
+├──────────────────────────────────────┤
+│ ▼ SCORM & Tracking                   │
+│   ID:     [ course-lesson-01       ] │
+│   Mode:   [ Completed / Passed     ] │
+└──────────────────────────────────────┘
+```
+
+### Features of the Inspector
+*   **Visual Control Inputs**: Replace text input fields with sliders (for padding, font sizes), dropdowns, and button toggles (for alignment, widths).
+*   **Collapsible Sections (Accordions)**: Settings are grouped into logical, neat dropdown sections:
+    *   **Design & Theme**: Fonts, background images, border-radius, colors.
+    *   **Layout**: Width presets (Narrow, Medium, Full), columns, padding.
+    *   **Interactivity**: Locking rules, navigation controls.
+    *   **Publishing**: SCORM versions, completion criteria.
+
+---
+
+## 3. Unified Configuration Presets (Theme-Style Settings)
+
+To prevent users from getting bogged down in complex SCORM and compliance configurations, we group these technical fields into **Unified Presets** that can be toggled like visual themes:
+
+*   **"Quick Compliance" Preset**: Sets strict navigation rules, requires 100% video completion, and outputs standard SCORM 1.2 tracking.
+*   **"Gamified Checkpoint" Preset**: Enables free navigation, enables custom styles, and configures light score tracking.
+*   **"Classic Reading" Preset**: Disables locking, sets simple page scroll completion, and prepares standard package exports.
+
+---
+
+## 4. UI Layout & Architecture
+
+The browser viewport is split into three core zones:
+
+1.  **Left Sidebar (The Syllabus Navigator)**: Tree view showing the pages, lessons, and content outline.
+2.  **Center Sandbox (The Canvas)**: A responsive viewport container (simulating Desktop, Tablet, or Mobile) rendering the live course preview with drag-and-drop handles.
+3.  **Right Sidebar (The Inspector)**: Contextual Figma-style property panel for the selected syllabus item.
