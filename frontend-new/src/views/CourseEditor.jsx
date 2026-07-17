@@ -17,6 +17,13 @@ export default function CourseEditor({ courseId, user, onBack }) {
   
   // Tree expansion states
   const [expandedNodes, setExpandedNodes] = useState({});
+  const [inspectorMode, setInspectorMode] = useState('simple'); // simple, advanced
+  const [openAccordions, setOpenAccordions] = useState({
+    design: true,
+    start: false,
+    accessibility: false,
+    advanced: false
+  });
 
   useEffect(() => {
     loadEditorData();
@@ -219,6 +226,44 @@ export default function CourseEditor({ courseId, user, onBack }) {
     }
   };
 
+  const handleApplyPreset = async (presetKey) => {
+    try {
+      const res = await api.applyPreset(course._id, presetKey);
+      if (res.success) {
+        setCourse(res.course);
+        setSelectedItem({ type: 'course', data: res.course });
+        alert('Preset successfully applied to course config!');
+        handleRebuildPreview();
+      }
+    } catch (e) {
+      console.error('Failed to apply preset:', e);
+      alert('Error applying configuration preset.');
+    }
+  };
+
+  const getSimpleFieldsForType = (type) => {
+    if (type === 'course') return ['title', 'displayTitle', 'description', 'body', 'heroImage', '_themePreset'];
+    if (type === 'contentobject') return ['title', 'description', 'body'];
+    if (type === 'article') return ['title', 'body'];
+    if (type === 'block') return ['title', 'body'];
+    if (type === 'component') return ['title', 'body', '_component', '_layout'];
+    return [];
+  };
+
+  const isSimpleField = (key, type) => {
+    const simples = getSimpleFieldsForType(type);
+    if (simples.includes(key)) return true;
+    if (type === 'component') {
+      const isSystem = SYSTEM_FIELDS.includes(key) || (key.startsWith('_') && !['_component', '_layout', '_graphic', '_media', '_items', '_buttons'].includes(key));
+      return !isSystem;
+    }
+    return false;
+  };
+
+  const toggleAccordion = (section) => {
+    setOpenAccordions(prev => ({ ...prev, [section]: !prev[section] }));
+  };
+
   // Simple Form Field Renderer based on Schema
   const renderFormField = (key, prop, value, parentKey = '') => {
     const fullPath = parentKey ? `${parentKey}.${key}` : key;
@@ -330,6 +375,178 @@ export default function CourseEditor({ courseId, user, onBack }) {
       return schemas[data._component] || schemas['component'] || {};
     }
     return null;
+  };
+
+  const renderModeSelector = () => (
+    <div style={styles.modeSelectorContainer}>
+      <button 
+        onClick={() => setInspectorMode('simple')} 
+        style={{...styles.modeBtn, ...(inspectorMode === 'simple' ? styles.modeBtnActive : {})}}
+      >
+        Simple Mode
+      </button>
+      <button 
+        onClick={() => setInspectorMode('advanced')} 
+        style={{...styles.modeBtn, ...(inspectorMode === 'advanced' ? styles.modeBtnActive : {})}}
+      >
+        Advanced Mode
+      </button>
+    </div>
+  );
+
+  const renderPresetsSelector = () => {
+    if (selectedItem?.type !== 'course') return null;
+    return (
+      <div style={styles.presetsWrapper}>
+        <h4 style={styles.presetsTitle}>Quick Configuration Preset</h4>
+        <p style={styles.presetsSubtitle}>Select a configuration preset for this course:</p>
+        <div style={styles.presetsList}>
+          <div 
+            onClick={() => handleApplyPreset('compliance')}
+            style={{
+              ...styles.presetCard,
+              ...(course?._themePreset === 'compliance' ? styles.presetCardActive : {})
+            }}
+          >
+            <div style={styles.presetCardHeader}>
+              <span style={styles.presetCardIcon}>🛡️</span>
+              <span style={styles.presetCardName}>Standard Compliance</span>
+            </div>
+            <p style={styles.presetCardDesc}>Strict linear navigation, default screen-reader guides, and full SCORM standards.</p>
+          </div>
+          
+          <div 
+            onClick={() => handleApplyPreset('gamified')}
+            style={{
+              ...styles.presetCard,
+              ...(course?._themePreset === 'gamified' ? styles.presetCardActive : {})
+            }}
+          >
+            <div style={styles.presetCardHeader}>
+              <span style={styles.presetCardIcon}>🎮</span>
+              <span style={styles.presetCardName}>Gamified Exploration</span>
+            </div>
+            <p style={styles.presetCardDesc}>Free-form page navigation, minimal reading overlays, and disabled page locking.</p>
+          </div>
+
+          <div 
+            onClick={() => handleApplyPreset('classic')}
+            style={{
+              ...styles.presetCard,
+              ...(course?._themePreset === 'classic' ? styles.presetCardActive : {})
+            }}
+          >
+            <div style={styles.presetCardHeader}>
+              <span style={styles.presetCardIcon}>📖</span>
+              <span style={styles.presetCardName}>Classic Reading</span>
+            </div>
+            <p style={styles.presetCardDesc}>Simple linear scroll layout with standard menu and default user guides.</p>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderFigmaInspector = () => {
+    const schema = getActiveSchema();
+    if (!schema || !selectedItem) return <p>No settings available.</p>;
+    
+    const type = selectedItem.type;
+    const data = selectedItem.data;
+    
+    if (inspectorMode === 'simple') {
+      return (
+        <div style={styles.formFields}>
+          {type === 'course' && renderPresetsSelector()}
+          {Object.keys(schema).map(key => {
+            if (!isSimpleField(key, type)) return null;
+            return renderFormField(key, schema[key], data[key]);
+          })}
+        </div>
+      );
+    }
+    
+    const designFields = [];
+    const startFields = [];
+    const accessibilityFields = [];
+    const otherFields = [];
+    
+    Object.keys(schema).forEach(key => {
+      if (SYSTEM_FIELDS.includes(key)) return;
+      
+      const prop = schema[key];
+      const val = data[key];
+      
+      if (key === '_start') {
+        startFields.push({ key, prop, val });
+      } else if (key === '_globals' || key === '_accessibility') {
+        accessibilityFields.push({ key, prop, val });
+      } else if (isSimpleField(key, type)) {
+        designFields.push({ key, prop, val });
+      } else {
+        otherFields.push({ key, prop, val });
+      }
+    });
+
+    return (
+      <div style={styles.accordionContainer}>
+        {designFields.length > 0 && (
+          <div style={styles.accordionSection}>
+            <div onClick={() => toggleAccordion('design')} style={styles.accordionHeader}>
+              <span style={styles.accordionTitle}>🎨 Design & Content</span>
+              <span>{openAccordions.design ? '▼' : '▶'}</span>
+            </div>
+            {openAccordions.design && (
+              <div style={styles.accordionBody}>
+                {designFields.map(f => renderFormField(f.key, f.prop, f.val))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {startFields.length > 0 && (
+          <div style={styles.accordionSection}>
+            <div onClick={() => toggleAccordion('start')} style={styles.accordionHeader}>
+              <span style={styles.accordionTitle}>🚀 Start Settings</span>
+              <span>{openAccordions.start ? '▼' : '▶'}</span>
+            </div>
+            {openAccordions.start && (
+              <div style={styles.accordionBody}>
+                {startFields.map(f => renderFormField(f.key, f.prop, f.val))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {accessibilityFields.length > 0 && (
+          <div style={styles.accordionSection}>
+            <div onClick={() => toggleAccordion('accessibility')} style={styles.accordionHeader}>
+              <span style={styles.accordionTitle}>♿ Accessibility & Guides</span>
+              <span>{openAccordions.accessibility ? '▼' : '▶'}</span>
+            </div>
+            {openAccordions.accessibility && (
+              <div style={styles.accordionBody}>
+                {accessibilityFields.map(f => renderFormField(f.key, f.prop, f.val))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {otherFields.length > 0 && (
+          <div style={styles.accordionSection}>
+            <div onClick={() => toggleAccordion('advanced')} style={styles.accordionHeader}>
+              <span style={styles.accordionTitle}>⚙️ Technical Properties</span>
+              <span>{openAccordions.advanced ? '▼' : '▶'}</span>
+            </div>
+            {openAccordions.advanced && (
+              <div style={styles.accordionBody}>
+                {otherFields.map(f => renderFormField(f.key, f.prop, f.val))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -519,18 +736,9 @@ export default function CourseEditor({ courseId, user, onBack }) {
               <div style={styles.formHeader}>
                 <span style={styles.formTypeTag}>{selectedItem?.type?.toUpperCase()}</span>
                 <h3>{selectedItem?.data?.title || 'Configure Details'}</h3>
+                {renderModeSelector()}
               </div>
-              <div style={styles.formFields}>
-                {(() => {
-                  const schema = getActiveSchema();
-                  if (!schema || !selectedItem) return <p>No settings available.</p>;
-                  return Object.keys(schema).map(key => {
-                    const prop = schema[key];
-                    const val = selectedItem.data[key];
-                    return renderFormField(key, prop, val);
-                  });
-                })()}
-              </div>
+              {renderFigmaInspector()}
             </div>
           )}
         </div>
@@ -899,6 +1107,114 @@ const styles = {
     alignItems: 'center',
     gap: '12px',
     color: 'var(--text-muted)',
+  },
+  modeSelectorContainer: {
+    display: 'flex',
+    gap: '8px',
+    marginTop: '12px',
+  },
+  modeBtn: {
+    flexGrow: 1,
+    padding: '6px 12px',
+    backgroundColor: 'transparent',
+    border: '1px solid var(--border-color)',
+    borderRadius: 'var(--border-radius-sm)',
+    color: 'var(--text-secondary)',
+    fontSize: '12px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    transition: 'var(--transition-smooth)',
+  },
+  modeBtnActive: {
+    backgroundColor: 'var(--accent-color)',
+    borderColor: 'var(--accent-color)',
+    color: 'var(--accent-text)',
+  },
+  presetsWrapper: {
+    marginBottom: '16px',
+    borderBottom: '1px solid var(--border-color)',
+    paddingBottom: '16px',
+  },
+  presetsTitle: {
+    fontSize: '13px',
+    fontWeight: '600',
+    color: 'var(--text-primary)',
+    margin: '0 0 4px 0',
+  },
+  presetsSubtitle: {
+    fontSize: '11px',
+    color: 'var(--text-muted)',
+    margin: '0 0 12px 0',
+  },
+  presetsList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px',
+  },
+  presetCard: {
+    padding: '12px',
+    border: '1px solid var(--border-color)',
+    borderRadius: 'var(--border-radius-sm)',
+    backgroundColor: 'var(--bg-primary)',
+    cursor: 'pointer',
+    transition: 'var(--transition-smooth)',
+  },
+  presetCardActive: {
+    borderColor: 'var(--accent-color)',
+    backgroundColor: 'var(--bg-tertiary)',
+  },
+  presetCardHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    marginBottom: '4px',
+  },
+  presetCardIcon: {
+    fontSize: '16px',
+  },
+  presetCardName: {
+    fontSize: '12px',
+    fontWeight: '600',
+    color: 'var(--text-primary)',
+  },
+  presetCardDesc: {
+    fontSize: '11px',
+    color: 'var(--text-muted)',
+    margin: 0,
+    lineHeight: '1.3',
+  },
+  accordionContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px',
+  },
+  accordionSection: {
+    border: '1px solid var(--border-color)',
+    borderRadius: 'var(--border-radius-sm)',
+    overflow: 'hidden',
+    backgroundColor: 'var(--bg-secondary)',
+  },
+  accordionHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '10px 14px',
+    cursor: 'pointer',
+    backgroundColor: 'var(--bg-tertiary)',
+    transition: 'var(--transition-smooth)',
+    userSelect: 'none',
+  },
+  accordionTitle: {
+    fontSize: '12px',
+    fontWeight: '600',
+    color: 'var(--text-primary)',
+  },
+  accordionBody: {
+    padding: '14px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+    backgroundColor: 'var(--bg-secondary)',
   },
 };
 

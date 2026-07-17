@@ -1,0 +1,63 @@
+# Implementation Plan: Figma-Style Visual Course Editor
+
+This plan details the implementation checklist and verification steps to build the visual sandbox builder, floating contextual styling toolbar, device frame viewport, and Figma-style property inspector panels.
+
+---
+
+## User Review Required
+
+> [!IMPORTANT]
+> The **Floating Contextual Toolbar** and **Drag & Drop** features require establishing an IPC/iframe bridge (`postMessage` communication) between the parent React application and the compiled Adapt course preview running inside the iframe. This requires inserting a small event-listener helper script into the Adapt framework preview output build.
+
+---
+
+## Implementation Checklist & Phases
+
+### Phase 1: Preset Configuration Engine (Backend & State)
+*   [ ] **Create Preset Mappings**: Define default configuration presets (e.g. `Quick Compliance`, `Gamified Checkpoint`, `Classic Reading`) as a static JSON map.
+*   [ ] **Implement Preset Application API**: Add a route/controller helper to apply a preset payload (e.g. SCORM tracking parameters, navigation locks) to a course object in the database.
+*   *   **Periodic Check**: Verify that choosing a preset successfully overwrites course configuration settings in the database and updates the UI state.
+
+---
+
+### Phase 2: Figma-Style Inspector Sidebar (React Frontend)
+*   [ ] **Create Collapsible Accordions**: Implement property grouping panels (`Design & Typography`, `Layout & Spacing`, `Interactivity`, `SCORM & Publishing`) in the right sidebar.
+*   [ ] **Implement Visual Style Inputs**:
+    *   Add color picker popovers for text and container background colors.
+    *   Add sliders for margins, padding, and font-size adjustments.
+    *   Add button groups (e.g. `Left / Center / Right` icon toggles) for text alignment.
+*   *   **Periodic Check**: Check that manipulating sliders/pickers updates the local selected item state and debounces API save requests to the database successfully.
+
+---
+
+### Phase 3: Device Frame Viewport (React Canvas)
+*   [ ] **Build Responsive Viewport Frame**: Wrap the preview iframe inside a styled frame container mimicking Laptop, Tablet, and Mobile screens.
+*   [ ] **Implement Frame Switcher Controls**: Add buttons in the preview header to animate the iframe dimensions dynamically (`100% width` for laptop, `768px` for tablet, `375px` for mobile).
+*   *   **Periodic Check**: Toggle different devices and ensure the iframe scales smoothly via CSS transitions without breaking the layout.
+
+---
+
+### Phase 4: Floating Contextual Toolbar (Inline Editing)
+*   [ ] **Build Floating Toolbar Component**: Create a floating toolbar containing quick typography buttons (`B`, `I`, `U`, H1/H2 dropdown, Text Color, BG Color).
+*   [ ] **Establish Event Bridge Script**:
+    *   Add a script injection to the Adapt preview output that listens for click events on articles, blocks, and components.
+    *   When clicked, send the target element's ID and bounding box coordinates up to the parent window via `window.parent.postMessage`.
+*   [ ] **Render Toolbar Contextually**: Listen for incoming message coordinates in `CourseEditor.jsx`, position the floating toolbar right above the selected element, and enable inline editing.
+*   *   **Periodic Check**: Click elements inside the sandbox, verify the floating toolbar positions itself correctly, and verify text changes are synced back to the database.
+
+---
+
+### Phase 5: Drag-and-Drop Layouts
+*   [ ] **Implement Sandbox Drag & Drop**: Enable authors to drag rows (Blocks) and columns (Components) directly in the sandbox window to re-order the syllabus.
+*   *   **Periodic Check**: Perform drag-and-drop actions, verify that database order index fields are updated, and confirm that the preview refreshes with the new order.
+
+---
+
+## Verification Plan
+
+### Automated Checks
+*   Verify that database update operations triggered by visual editing tools do not violate schema validators or trigger unique constraint errors.
+
+### Manual Verification
+*   Confirm responsiveness and positioning of the floating toolbar on different simulated screen sizes (Desktop, Tablet, Mobile).
+*   Confirm undo/redo behavior when modifying styles from the floating toolbar.

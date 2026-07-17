@@ -636,6 +636,12 @@
     },
     "externalReferences": {
       "type" : "object"
+    },
+    "_themePreset": {
+      "type": "string",
+      "default": "",
+      "title": "Selected Preset",
+      "help": "Stores the configuration preset currently applied to this course"
     }
   }
 }

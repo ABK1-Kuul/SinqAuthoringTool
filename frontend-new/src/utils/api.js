@@ -32,6 +32,7 @@ export const api = {
   createContent: (type, data) => client.post(`/api/content/${type}`, data),
   updateContent: (type, id, data) => client.put(`/api/content/${type}/${id}`, data),
   deleteContent: (type, id) => client.delete(`/api/content/${type}/${id}`),
+  applyPreset: (courseId, presetKey) => client.post('/api/content/preset/apply', { courseId, presetKey }),
 
   // Course Preview
   previewCourse: (id) => client.get(`/api/output/adapt/preview/${id}`),
