@@ -16,7 +16,6 @@ export default function CourseEditor({ courseId, user, onBack }) {
   const [editorLoading, setEditorLoading] = useState(true);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState('');
-  const [activeTab, setActiveTab] = useState('outline'); // outline, config, theme
   
   // Tree expansion states
   const [expandedNodes, setExpandedNodes] = useState({});
@@ -989,8 +988,8 @@ export default function CourseEditor({ courseId, user, onBack }) {
 
   return (
     <div style={styles.container}>
-      {/* Sidebar Editor Tools */}
-      <div style={styles.editorPanel}>
+      {/* 1. Left Sidebar: Syllabus Navigator */}
+      <div style={styles.leftSidebar}>
         {/* Panel Header */}
         <div style={styles.panelHeader}>
           <button onClick={onBack} style={styles.backBtn}>
@@ -1004,22 +1003,6 @@ export default function CourseEditor({ courseId, user, onBack }) {
           </button>
         </div>
 
-        {/* Editor Tabs */}
-        <div style={styles.tabs}>
-          <button 
-            onClick={() => setActiveTab('outline')} 
-            style={{...styles.tab, ...(activeTab === 'outline' ? styles.activeTab : {})}}
-          >
-            Outline
-          </button>
-          <button 
-            onClick={() => setActiveTab('config')} 
-            style={{...styles.tab, ...(activeTab === 'config' ? styles.activeTab : {})}}
-          >
-            Settings
-          </button>
-        </div>
-
         {/* Panel Body */}
         <div style={styles.panelBody}>
           {editorLoading ? (
@@ -1027,8 +1010,7 @@ export default function CourseEditor({ courseId, user, onBack }) {
               <div style={styles.spinner} />
               <span>Loading workspace...</span>
             </div>
-          ) : activeTab === 'outline' ? (
-            /* Outline Hierarchy Tree */
+          ) : (
             <div style={styles.tree}>
               <div 
                 onClick={() => setSelectedItem({ type: 'course', data: course })}
@@ -1250,8 +1232,25 @@ export default function CourseEditor({ courseId, user, onBack }) {
                   );
                 })}
             </div>
-          ) : (
-            /* Settings Form Builder */
+          )}
+        </div>
+      </div>
+
+      {/* 2. Right Sidebar: Figma-Style Properties Inspector */}
+      <div style={styles.rightSidebar}>
+        {/* Panel Header */}
+        <div style={styles.panelHeader}>
+          <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)' }}>Properties Inspector</span>
+        </div>
+
+        {/* Panel Body */}
+        <div style={styles.panelBody}>
+          {editorLoading ? (
+            <div style={styles.paneLoading}>
+              <div style={styles.spinner} />
+              <span>Loading settings...</span>
+            </div>
+          ) : selectedItem ? (
             <div style={styles.formContainer}>
               <div style={styles.formHeader}>
                 <span style={styles.formTypeTag}>{selectedItem?.type?.toUpperCase()}</span>
@@ -1259,6 +1258,11 @@ export default function CourseEditor({ courseId, user, onBack }) {
                 {renderModeSelector()}
               </div>
               {renderFigmaInspector()}
+            </div>
+          ) : (
+            <div style={styles.previewEmpty}>
+              <Settings size={36} />
+              <p>Select any node or element on canvas to configure styling properties.</p>
             </div>
           )}
         </div>
@@ -1518,7 +1522,6 @@ export default function CourseEditor({ courseId, user, onBack }) {
 
           <button 
             onClick={() => {
-              setActiveTab('config');
               setInspectorMode('simple');
             }}
             style={styles.toolbarBtn}
@@ -1550,13 +1553,22 @@ const styles = {
     backgroundColor: 'var(--bg-primary)',
     overflow: 'hidden',
   },
-  editorPanel: {
-    width: '420px',
+  leftSidebar: {
+    width: '320px',
     borderRight: '1px solid var(--border-color)',
     display: 'flex',
     flexDirection: 'column',
     backgroundColor: 'var(--bg-secondary)',
     flexShrink: 0,
+  },
+  rightSidebar: {
+    width: '380px',
+    borderLeft: '1px solid var(--border-color)',
+    display: 'flex',
+    flexDirection: 'column',
+    backgroundColor: 'var(--bg-secondary)',
+    flexShrink: 0,
+    overflowY: 'auto',
   },
   panelHeader: {
     padding: '16px 20px',
