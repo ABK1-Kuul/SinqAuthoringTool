@@ -516,13 +516,13 @@ export default function CourseEditor({ courseId, user, onBack }) {
 
     const val = value !== undefined ? value : prop.default || '';
 
-    // Overrides check:
-    const isColor = key.toLowerCase().includes('color');
-    const isSpacing = key.toLowerCase().includes('padding') || key.toLowerCase().includes('margin');
-
     // Handle select dropdown choices (from enum or inputType: { type: "Select", options: [...] })
     const isSelect = prop.inputType === 'Select' || (prop.inputType && typeof prop.inputType === 'object' && prop.inputType.type === 'Select');
     const selectOptions = isSelect ? (prop.inputType.options || prop.enum || []) : null;
+
+    // Overrides check:
+    const isColor = key.toLowerCase().includes('color');
+    const isSpacing = (key.toLowerCase().includes('padding') || key.toLowerCase().includes('margin') || key.toLowerCase().includes('width') || key.toLowerCase().includes('height')) && !isSelect && prop.type !== 'object' && key !== '_layout';
 
     const isAlign = key.toLowerCase().includes('align') || (selectOptions && selectOptions.every(opt => {
       const optVal = typeof opt === 'object' ? opt.value : opt;
@@ -1404,6 +1404,30 @@ export default function CourseEditor({ courseId, user, onBack }) {
 
           <div style={styles.toolbarDivider} />
 
+          {/* Typography Bold/Italic Toggles */}
+          <button 
+            onClick={() => handleQuickStyleChange('bold', '')}
+            style={{
+              ...styles.toolbarBtn,
+              ...(selectedItem?.data?._classes?.includes('font-bold') ? styles.toolbarBtnActive : {})
+            }}
+            title="Bold Typography"
+          >
+            <b>B</b>
+          </button>
+          <button 
+            onClick={() => handleQuickStyleChange('italic', '')}
+            style={{
+              ...styles.toolbarBtn,
+              ...(selectedItem?.data?._classes?.includes('font-italic') ? styles.toolbarBtnActive : {})
+            }}
+            title="Italic Typography"
+          >
+            <i>I</i>
+          </button>
+
+          <div style={styles.toolbarDivider} />
+
           {/* Up / Down Shifter Buttons */}
           <button 
             onClick={() => handleShiftSibling('up')}
@@ -1684,7 +1708,7 @@ const styles = {
     textTransform: 'uppercase',
   },
   nodeActions: {
-    display: 'none',
+    display: 'flex',
     gap: '4px',
   },
   nodeDeleteBtn: {
