@@ -1,10 +1,20 @@
-import React, { useState } from 'react';
-import { Layout, LogOut, ShieldAlert, Palette, BookOpen, User, Sun, Moon } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Layout, LogOut, ShieldAlert, Palette, BookOpen, User, Sun, Moon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { api } from '../utils/api';
 
 export default function AppShell({ user, currentView, onViewChange, onLogout, children }) {
   const [themeMenuOpen, setThemeMenuOpen] = useState(false);
   const [theme, setTheme] = useState('dark'); // dark, light, emerald, sunset
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  // Auto-collapse when entering the editor view, expand when going to dashboard
+  useEffect(() => {
+    if (currentView === 'editor') {
+      setIsSidebarCollapsed(true);
+    } else {
+      setIsSidebarCollapsed(false);
+    }
+  }, [currentView]);
 
   const changeTheme = (newTheme) => {
     const root = document.documentElement;
@@ -30,9 +40,37 @@ export default function AppShell({ user, currentView, onViewChange, onLogout, ch
   return (
     <div style={styles.container}>
       {/* Sidebar */}
-      <aside style={styles.sidebar}>
-        <div style={styles.sidebarHeader}>
-          <img src="/Sinq-learning.png" alt="SINQ Learning Logo" style={styles.logoImage} />
+      <aside style={{
+        ...styles.sidebar,
+        width: isSidebarCollapsed ? '64px' : '240px',
+        transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+      }}>
+        <div style={{
+          ...styles.sidebarHeader,
+          justifyContent: isSidebarCollapsed ? 'center' : 'space-between',
+          padding: isSidebarCollapsed ? '24px 0' : '24px 20px'
+        }}>
+          {!isSidebarCollapsed && (
+            <img src="/Sinq-learning.png" alt="SINQ Learning Logo" style={styles.logoImage} />
+          )}
+          <button 
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--text-secondary)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '6px',
+              borderRadius: '4px',
+              backgroundColor: 'var(--bg-tertiary)'
+            }}
+            title={isSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+          >
+            {isSidebarCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+          </button>
         </div>
 
         <nav style={styles.nav}>
@@ -40,11 +78,18 @@ export default function AppShell({ user, currentView, onViewChange, onLogout, ch
             onClick={() => onViewChange('dashboard')}
             style={{
               ...styles.navItem,
-              ...(currentView === 'dashboard' || currentView === 'editor' ? styles.activeNavItem : {})
+              ...(currentView === 'dashboard' || currentView === 'editor' ? {
+                ...styles.activeNavItem,
+                paddingLeft: isSidebarCollapsed ? '0' : '13px'
+              } : {}),
+              justifyContent: isSidebarCollapsed ? 'center' : 'flex-start',
+              padding: isSidebarCollapsed ? '12px 0' : '12px 16px',
+              gap: isSidebarCollapsed ? '0' : '12px'
             }}
+            title={isSidebarCollapsed ? "Courses" : ""}
           >
             <BookOpen size={18} />
-            <span>Courses</span>
+            {!isSidebarCollapsed && <span>Courses</span>}
           </button>
 
           {isSuperAdmin && (
@@ -52,29 +97,55 @@ export default function AppShell({ user, currentView, onViewChange, onLogout, ch
               onClick={() => onViewChange('admin')}
               style={{
                 ...styles.navItem,
-                ...(currentView === 'admin' ? styles.activeNavItem : {})
+                ...(currentView === 'admin' ? {
+                  ...styles.activeNavItem,
+                  paddingLeft: isSidebarCollapsed ? '0' : '13px'
+                } : {}),
+                justifyContent: isSidebarCollapsed ? 'center' : 'flex-start',
+                padding: isSidebarCollapsed ? '12px 0' : '12px 16px',
+                gap: isSidebarCollapsed ? '0' : '12px'
               }}
+              title={isSidebarCollapsed ? "Admin Portal" : ""}
             >
               <ShieldAlert size={18} />
-              <span>Admin Portal</span>
+              {!isSidebarCollapsed && <span>Admin Portal</span>}
             </button>
           )}
         </nav>
 
-        <div style={styles.sidebarFooter}>
-          <div style={styles.userInfo}>
-            <div style={styles.userAvatar}>
+        <div style={{
+          ...styles.sidebarFooter,
+          padding: isSidebarCollapsed ? '20px 0' : '20px 12px',
+          alignItems: isSidebarCollapsed ? 'center' : 'stretch'
+        }}>
+          {!isSidebarCollapsed ? (
+            <div style={styles.userInfo}>
+              <div style={styles.userAvatar}>
+                <User size={16} />
+              </div>
+              <div style={styles.userMeta}>
+                <span style={styles.userName}>{user?.email?.split('@')[0]}</span>
+                <span style={styles.userRole}>{isSuperAdmin ? 'Super Admin' : 'Creator'}</span>
+              </div>
+            </div>
+          ) : (
+            <div style={{ ...styles.userAvatar, margin: '0 auto 8px auto' }} title={`${user?.email} (${isSuperAdmin ? 'Super Admin' : 'Creator'})`}>
               <User size={16} />
             </div>
-            <div style={styles.userMeta}>
-              <span style={styles.userName}>{user?.email?.split('@')[0]}</span>
-              <span style={styles.userRole}>{isSuperAdmin ? 'Super Admin' : 'Creator'}</span>
-            </div>
-          </div>
+          )}
 
-          <button onClick={handleLogout} style={styles.logoutBtn}>
+          <button 
+            onClick={handleLogout} 
+            style={{
+              ...styles.logoutBtn,
+              justifyContent: isSidebarCollapsed ? 'center' : 'flex-start',
+              padding: isSidebarCollapsed ? '12px 0' : '12px 16px',
+              gap: isSidebarCollapsed ? '0' : '12px'
+            }}
+            title={isSidebarCollapsed ? "Sign Out" : ""}
+          >
             <LogOut size={18} />
-            <span>Sign Out</span>
+            {!isSidebarCollapsed && <span>Sign Out</span>}
           </button>
         </div>
       </aside>

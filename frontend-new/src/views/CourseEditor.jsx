@@ -39,6 +39,36 @@ export default function CourseEditor({ courseId, user, onBack }) {
   const [showBgColorPopover, setShowBgColorPopover] = useState(false);
   const [hoveredNodeId, setHoveredNodeId] = useState(null);
 
+  // Column Sizing States
+  const [leftSidebarWidth, setLeftSidebarWidth] = useState(300);
+  const [rightSidebarWidth, setRightSidebarWidth] = useState(360);
+
+  const handleMouseDown = (e, direction) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startLeftWidth = leftSidebarWidth;
+    const startRightWidth = rightSidebarWidth;
+
+    const handleMouseMove = (moveEvent) => {
+      const deltaX = moveEvent.clientX - startX;
+      if (direction === 'left') {
+        const newWidth = Math.max(200, Math.min(500, startLeftWidth + deltaX));
+        setLeftSidebarWidth(newWidth);
+      } else if (direction === 'right') {
+        const newWidth = Math.max(250, Math.min(600, startRightWidth - deltaX));
+        setRightSidebarWidth(newWidth);
+      }
+    };
+
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
   useEffect(() => {
     loadEditorData();
   }, [courseId]);
@@ -989,7 +1019,7 @@ export default function CourseEditor({ courseId, user, onBack }) {
   return (
     <div style={styles.container}>
       {/* 1. Left Sidebar: Syllabus Navigator */}
-      <div style={styles.leftSidebar}>
+      <div style={{ ...styles.leftSidebar, width: `${leftSidebarWidth}px` }}>
         {/* Panel Header */}
         <div style={styles.panelHeader}>
           <button onClick={onBack} style={styles.backBtn}>
@@ -1236,37 +1266,20 @@ export default function CourseEditor({ courseId, user, onBack }) {
         </div>
       </div>
 
-      {/* 2. Right Sidebar: Figma-Style Properties Inspector */}
-      <div style={styles.rightSidebar}>
-        {/* Panel Header */}
-        <div style={styles.panelHeader}>
-          <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)' }}>Properties Inspector</span>
-        </div>
-
-        {/* Panel Body */}
-        <div style={styles.panelBody}>
-          {editorLoading ? (
-            <div style={styles.paneLoading}>
-              <div style={styles.spinner} />
-              <span>Loading settings...</span>
-            </div>
-          ) : selectedItem ? (
-            <div style={styles.formContainer}>
-              <div style={styles.formHeader}>
-                <span style={styles.formTypeTag}>{selectedItem?.type?.toUpperCase()}</span>
-                <h3>{selectedItem?.data?.title || 'Configure Details'}</h3>
-                {renderModeSelector()}
-              </div>
-              {renderFigmaInspector()}
-            </div>
-          ) : (
-            <div style={styles.previewEmpty}>
-              <Settings size={36} />
-              <p>Select any node or element on canvas to configure styling properties.</p>
-            </div>
-          )}
-        </div>
-      </div>
+      {/* Resize Handle Left */}
+      <div 
+        onMouseDown={(e) => handleMouseDown(e, 'left')}
+        style={{
+          width: '6px',
+          cursor: 'col-resize',
+          backgroundColor: 'transparent',
+          borderRight: '1px solid var(--border-color)',
+          transition: 'background-color 0.2s',
+          zIndex: 5,
+        }}
+        onMouseEnter={(e) => e.target.style.backgroundColor = 'var(--accent-color)'}
+        onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+      />
 
       {/* Side-by-Side Responsive Preview Iframe */}
       <div style={styles.previewPanel}>
@@ -1325,6 +1338,53 @@ export default function CourseEditor({ courseId, user, onBack }) {
             <div style={styles.previewEmpty}>
               <RefreshCw size={36} />
               <p>Preview rendering canvas is setting up...</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Resize Handle Right */}
+      <div 
+        onMouseDown={(e) => handleMouseDown(e, 'right')}
+        style={{
+          width: '6px',
+          cursor: 'col-resize',
+          backgroundColor: 'transparent',
+          borderLeft: '1px solid var(--border-color)',
+          transition: 'background-color 0.2s',
+          zIndex: 5,
+        }}
+        onMouseEnter={(e) => e.target.style.backgroundColor = 'var(--accent-color)'}
+        onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+      />
+
+      {/* 2. Right Sidebar: Figma-Style Properties Inspector */}
+      <div style={{ ...styles.rightSidebar, width: `${rightSidebarWidth}px` }}>
+        {/* Panel Header */}
+        <div style={styles.panelHeader}>
+          <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)' }}>Properties Inspector</span>
+        </div>
+
+        {/* Panel Body */}
+        <div style={styles.panelBody}>
+          {editorLoading ? (
+            <div style={styles.paneLoading}>
+              <div style={styles.spinner} />
+              <span>Loading settings...</span>
+            </div>
+          ) : selectedItem ? (
+            <div style={styles.formContainer}>
+              <div style={styles.formHeader}>
+                <span style={styles.formTypeTag}>{selectedItem?.type?.toUpperCase()}</span>
+                <h3>{selectedItem?.data?.title || 'Configure Details'}</h3>
+                {renderModeSelector()}
+              </div>
+              {renderFigmaInspector()}
+            </div>
+          ) : (
+            <div style={styles.previewEmpty}>
+              <Settings size={36} />
+              <p>Select any node or element on canvas to configure styling properties.</p>
             </div>
           )}
         </div>
