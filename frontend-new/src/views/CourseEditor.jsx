@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { 
   ArrowLeft, Play, RefreshCw, Layers, FileText, Square, 
   HelpCircle, Settings, Plus, Trash2, Edit3, Save, ChevronRight, ChevronDown,
-  Monitor, Smartphone, Tablet
+  Monitor, Smartphone, Tablet,
+  AlignLeft, AlignCenter, AlignRight, AlignJustify,
+  Image, Video, CheckSquare
 } from 'lucide-react';
 import { api } from '../utils/api';
 
@@ -34,6 +36,9 @@ export default function CourseEditor({ courseId, user, onBack }) {
     elementType: ''
   });
   const [draggedItem, setDraggedItem] = useState(null); // { type, id, parentId }
+  const [showTextColorPopover, setShowTextColorPopover] = useState(false);
+  const [showBgColorPopover, setShowBgColorPopover] = useState(false);
+  const [hoveredNodeId, setHoveredNodeId] = useState(null);
 
   useEffect(() => {
     loadEditorData();
@@ -261,6 +266,8 @@ export default function CourseEditor({ courseId, user, onBack }) {
 
       iframeDoc.addEventListener('scroll', () => {
         setToolbarPosition(prev => ({ ...prev, visible: false }));
+        setShowTextColorPopover(false);
+        setShowBgColorPopover(false);
       });
 
       iframeDoc.addEventListener('click', (e) => {
@@ -270,6 +277,8 @@ export default function CourseEditor({ courseId, user, onBack }) {
         if (closestEl) {
           e.preventDefault();
           e.stopPropagation();
+          setShowTextColorPopover(false);
+          setShowBgColorPopover(false);
           
           const id = closestEl.getAttribute('id') || closestEl.getAttribute('data-id');
           if (!id) return;
@@ -307,10 +316,54 @@ export default function CourseEditor({ courseId, user, onBack }) {
           }
         } else {
           setToolbarPosition(prev => ({ ...prev, visible: false }));
+          setShowTextColorPopover(false);
+          setShowBgColorPopover(false);
         }
       }, true);
     } catch (err) {
       console.warn('Cannot attach iframe click handlers:', err);
+    }
+  };
+
+  const handleShiftSibling = async (direction) => {
+    if (!selectedItem) return;
+    const { type, data } = selectedItem;
+    if (type === 'course') return;
+    
+    const key = type === 'contentobject' ? 'pages' : type + 's';
+    const siblings = [...outline[key]].filter(item => item._parentId === data._parentId).sort((a,b) => (a._sortOrder || 0) - (b._sortOrder || 0));
+    
+    const index = siblings.findIndex(item => item._id === data._id);
+    if (index === -1) return;
+    
+    const swapWithIndex = direction === 'up' ? index - 1 : index + 1;
+    if (swapWithIndex < 0 || swapWithIndex >= siblings.length) return;
+    
+    const targetItem = siblings[swapWithIndex];
+    
+    // Swap sortOrder
+    const oldOrder = data._sortOrder || 0;
+    const newOrder = targetItem._sortOrder || 0;
+    
+    try {
+      await Promise.all([
+        api.updateContent(type, data._id, { _sortOrder: newOrder }),
+        api.updateContent(type, targetItem._id, { _sortOrder: oldOrder })
+      ]);
+      
+      // Update local state
+      setOutline(prev => {
+        const list = [...prev[key]];
+        const dItem = list.find(item => item._id === data._id);
+        const tItem = list.find(item => item._id === targetItem._id);
+        if (dItem) dItem._sortOrder = newOrder;
+        if (tItem) tItem._sortOrder = oldOrder;
+        return { ...prev, [key]: list };
+      });
+      
+      handleRebuildPreview();
+    } catch (err) {
+      console.error('Failed to shift layout order:', err);
     }
   };
 
@@ -325,6 +378,16 @@ export default function CourseEditor({ courseId, user, onBack }) {
       let classes = data._classes || '';
       classes = classes.replace(/\balign-(left|center|right)\b/g, '').trim();
       classes = `${classes} align-${value}`.trim();
+      updatePayload = { _classes: classes };
+    } else if (styleKey === 'textColor') {
+      let classes = data._classes || '';
+      classes = classes.replace(/\btext-(white|black|blue|purple|red)\b/g, '').trim();
+      classes = `${classes} text-${value}`.trim();
+      updatePayload = { _classes: classes };
+    } else if (styleKey === 'backgroundColor') {
+      let classes = data._classes || '';
+      classes = classes.replace(/\bbg-(light|dark|neutral)\b/g, '').trim();
+      classes = `${classes} bg-${value}`.trim();
       updatePayload = { _classes: classes };
     }
 
@@ -349,7 +412,7 @@ export default function CourseEditor({ courseId, user, onBack }) {
         iframe.contentWindow.postMessage({
           action: 'updateAttribute',
           id: data._id,
-          attribute: styleKey === 'alignment' ? '_classes' : styleKey,
+          attribute: ['alignment', 'textColor', 'backgroundColor'].includes(styleKey) ? '_classes' : styleKey,
           value: updatePayload._classes || value
         }, '*');
       }
@@ -453,9 +516,141 @@ export default function CourseEditor({ courseId, user, onBack }) {
 
     const val = value !== undefined ? value : prop.default || '';
 
+    // Overrides check:
+    const isColor = key.toLowerCase().includes('color');
+    const isSpacing = key.toLowerCase().includes('padding') || key.toLowerCase().includes('margin');
+
     // Handle select dropdown choices (from enum or inputType: { type: "Select", options: [...] })
     const isSelect = prop.inputType === 'Select' || (prop.inputType && typeof prop.inputType === 'object' && prop.inputType.type === 'Select');
     const selectOptions = isSelect ? (prop.inputType.options || prop.enum || []) : null;
+
+    const isAlign = key.toLowerCase().includes('align') || (selectOptions && selectOptions.every(opt => {
+      const optVal = typeof opt === 'object' ? opt.value : opt;
+      return ['left', 'center', 'right', 'justify'].includes(optVal);
+    }));
+
+    // 1. Spacing override (Range Slider)
+    if (isSpacing) {
+      const numVal = parseInt(val) || 0;
+      return (
+        <div key={fullPath} style={styles.formGroup}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <label style={styles.formLabel}>{prop.title || key}</label>
+            <span style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--accent-color)' }}>{numVal}px</span>
+          </div>
+          <input
+            type="range"
+            min="0"
+            max="120"
+            step="4"
+            value={numVal}
+            onChange={(e) => {
+              const updatedVal = typeof val === 'number' ? Number(e.target.value) : e.target.value + 'px';
+              handleFieldChange(fullPath, updatedVal);
+            }}
+            style={styles.rangeInput}
+          />
+          {prop.help && <span style={styles.helpText}>{prop.help}</span>}
+        </div>
+      );
+    }
+
+    // 2. Color override (Color Picker Grid)
+    if (isColor) {
+      const presets = ['#ffffff', '#f4f4f5', '#e4e4e7', '#18181b', '#3b82f6', '#a855f7', '#ec4899', '#ef4444', '#10b981', '#f59e0b'];
+      const stringVal = String(val);
+      const isHex = stringVal.startsWith('#') && stringVal.length === 7;
+      return (
+        <div key={fullPath} style={styles.formGroup}>
+          <label style={styles.formLabel}>{prop.title || key}</label>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', margin: '4px 0' }}>
+            {presets.map(color => (
+              <button
+                key={color}
+                type="button"
+                onClick={() => handleFieldChange(fullPath, color)}
+                style={{
+                  width: '20px',
+                  height: '20px',
+                  borderRadius: '50%',
+                  backgroundColor: color,
+                  border: stringVal === color ? '2px solid var(--accent-color)' : '1px solid var(--border-color)',
+                  cursor: 'pointer',
+                  padding: 0
+                }}
+              />
+            ))}
+            <input
+              type="color"
+              value={isHex ? stringVal : '#ffffff'}
+              onChange={(e) => handleFieldChange(fullPath, e.target.value)}
+              style={{
+                width: '24px',
+                height: '24px',
+                border: 'none',
+                padding: 0,
+                backgroundColor: 'transparent',
+                cursor: 'pointer'
+              }}
+            />
+          </div>
+          <input
+            type="text"
+            value={val}
+            onChange={(e) => handleFieldChange(fullPath, e.target.value)}
+            style={styles.input}
+            placeholder="#ffffff"
+          />
+          {prop.help && <span style={styles.helpText}>{prop.help}</span>}
+        </div>
+      );
+    }
+
+    // 3. Segmented Alignment Buttons
+    if (isAlign && selectOptions) {
+      return (
+        <div key={fullPath} style={styles.formGroup}>
+          <label style={styles.formLabel}>{prop.title || key}</label>
+          <div style={{ display: 'flex', border: '1px solid var(--border-color)', borderRadius: 'var(--border-radius-sm)', overflow: 'hidden' }}>
+            {selectOptions.map(opt => {
+              const optVal = typeof opt === 'object' ? (opt.value !== undefined ? opt.value : opt) : opt;
+              const optText = typeof opt === 'object' ? (opt.text || opt.value || opt) : opt;
+              
+              let Icon = null;
+              if (optVal === 'left') Icon = AlignLeft;
+              else if (optVal === 'center') Icon = AlignCenter;
+              else if (optVal === 'right') Icon = AlignRight;
+              else if (optVal === 'justify') Icon = AlignJustify;
+
+              const isActive = val === optVal;
+
+              return (
+                <button
+                  key={optVal}
+                  type="button"
+                  onClick={() => handleFieldChange(fullPath, optVal)}
+                  style={{
+                    flex: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '8px',
+                    border: 'none',
+                    backgroundColor: isActive ? 'var(--accent-color)' : 'transparent',
+                    color: isActive ? '#ffffff' : 'var(--text-secondary)',
+                    cursor: 'pointer',
+                    transition: 'var(--transition-smooth)'
+                  }}
+                >
+                  {Icon ? <Icon size={14} /> : optText}
+                </button>
+              );
+            })}
+          </div>
+          {prop.help && <span style={styles.helpText}>{prop.help}</span>}
+        </div>
+      );
+    }
 
     if (selectOptions) {
       return (
@@ -510,12 +705,89 @@ export default function CourseEditor({ courseId, user, onBack }) {
       <div key={fullPath} style={styles.formGroup}>
         <label style={styles.formLabel}>{prop.title || key}</label>
         {prop.inputType === 'TextArea' ? (
-          <textarea
-            value={val}
-            onChange={(e) => handleFieldChange(fullPath, e.target.value)}
-            style={styles.textarea}
-            rows={4}
-          />
+          <>
+            <div style={styles.wysiwygToolbar}>
+              <button 
+                type="button" 
+                onClick={() => {
+                  const textarea = document.getElementById(`textarea-${fullPath}`);
+                  if (!textarea) return;
+                  const start = textarea.selectionStart;
+                  const end = textarea.selectionEnd;
+                  const text = textarea.value;
+                  const selected = text.substring(start, end);
+                  const replacement = `**${selected || 'bold text'}**`;
+                  const updatedText = text.substring(0, start) + replacement + text.substring(end);
+                  handleFieldChange(fullPath, updatedText);
+                }} 
+                style={styles.wysiwygBtn} 
+                title="Bold"
+              >
+                <b>B</b>
+              </button>
+              <button 
+                type="button" 
+                onClick={() => {
+                  const textarea = document.getElementById(`textarea-${fullPath}`);
+                  if (!textarea) return;
+                  const start = textarea.selectionStart;
+                  const end = textarea.selectionEnd;
+                  const text = textarea.value;
+                  const selected = text.substring(start, end);
+                  const replacement = `*${selected || 'italic text'}*`;
+                  const updatedText = text.substring(0, start) + replacement + text.substring(end);
+                  handleFieldChange(fullPath, updatedText);
+                }} 
+                style={styles.wysiwygBtn} 
+                title="Italic"
+              >
+                <i>I</i>
+              </button>
+              <button 
+                type="button" 
+                onClick={() => {
+                  const textarea = document.getElementById(`textarea-${fullPath}`);
+                  if (!textarea) return;
+                  const start = textarea.selectionStart;
+                  const end = textarea.selectionEnd;
+                  const text = textarea.value;
+                  const selected = text.substring(start, end);
+                  const replacement = `[${selected || 'link text'}](https://)`;
+                  const updatedText = text.substring(0, start) + replacement + text.substring(end);
+                  handleFieldChange(fullPath, updatedText);
+                }} 
+                style={styles.wysiwygBtn} 
+                title="Insert Link"
+              >
+                🔗
+              </button>
+              <button 
+                type="button" 
+                onClick={() => {
+                  const textarea = document.getElementById(`textarea-${fullPath}`);
+                  if (!textarea) return;
+                  const start = textarea.selectionStart;
+                  const end = textarea.selectionEnd;
+                  const text = textarea.value;
+                  const selected = text.substring(start, end);
+                  const replacement = `\n- ${selected || 'list item'}`;
+                  const updatedText = text.substring(0, start) + replacement + text.substring(end);
+                  handleFieldChange(fullPath, updatedText);
+                }} 
+                style={styles.wysiwygBtn} 
+                title="Bullet List"
+              >
+                📋
+              </button>
+            </div>
+            <textarea
+              id={`textarea-${fullPath}`}
+              value={val}
+              onChange={(e) => handleFieldChange(fullPath, e.target.value)}
+              style={styles.textarea}
+              rows={4}
+            />
+          </>
         ) : (
           <input
             type="text"
@@ -790,6 +1062,8 @@ export default function CourseEditor({ courseId, user, onBack }) {
                       onDragStart={(e) => handleDragStart(e, 'contentobject', page._id, courseId)}
                       onDragOver={(e) => handleDragOver(e, 'contentobject', courseId)}
                       onDrop={(e) => handleDrop(e, page._id)}
+                      onMouseEnter={() => setHoveredNodeId(page._id)}
+                      onMouseLeave={() => setHoveredNodeId(null)}
                     >
                       <div 
                         className="tree-node"
@@ -805,7 +1079,15 @@ export default function CourseEditor({ courseId, user, onBack }) {
                         </button>
                         <FileText size={14} />
                         <span style={styles.nodeTitle}>{page.title || 'Page'}</span>
-                        <div className="node-actions" style={styles.nodeActions}>
+                        <div 
+                          className="node-actions" 
+                          style={{
+                            ...styles.nodeActions,
+                            opacity: hoveredNodeId === page._id ? 1 : 0,
+                            pointerEvents: hoveredNodeId === page._id ? 'auto' : 'none',
+                            transition: 'opacity 0.2s ease'
+                          }}
+                        >
                           <button onClick={() => addArticle(page._id)} style={styles.addBtn} title="Add Article">
                             <Plus size={12} />
                           </button>
@@ -830,6 +1112,8 @@ export default function CourseEditor({ courseId, user, onBack }) {
                             onDragStart={(e) => handleDragStart(e, 'article', article._id, page._id)}
                             onDragOver={(e) => handleDragOver(e, 'article', page._id)}
                             onDrop={(e) => handleDrop(e, article._id)}
+                            onMouseEnter={(e) => { e.stopPropagation(); setHoveredNodeId(article._id); }}
+                            onMouseLeave={(e) => { e.stopPropagation(); setHoveredNodeId(null); }}
                           >
                             <div 
                               className="tree-node"
@@ -844,7 +1128,15 @@ export default function CourseEditor({ courseId, user, onBack }) {
                                 {articleExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                               </button>
                               <span style={styles.nodeTitle}>{article.title || 'Article'}</span>
-                              <div className="node-actions" style={styles.nodeActions}>
+                              <div 
+                                className="node-actions" 
+                                style={{
+                                  ...styles.nodeActions,
+                                  opacity: hoveredNodeId === article._id ? 1 : 0,
+                                  pointerEvents: hoveredNodeId === article._id ? 'auto' : 'none',
+                                  transition: 'opacity 0.2s ease'
+                                }}
+                              >
                                 <button onClick={() => addBlock(article._id)} style={styles.addBtn} title="Add Block">
                                   <Plus size={12} />
                                 </button>
@@ -869,6 +1161,8 @@ export default function CourseEditor({ courseId, user, onBack }) {
                                   onDragStart={(e) => handleDragStart(e, 'block', block._id, article._id)}
                                   onDragOver={(e) => handleDragOver(e, 'block', article._id)}
                                   onDrop={(e) => handleDrop(e, block._id)}
+                                  onMouseEnter={(e) => { e.stopPropagation(); setHoveredNodeId(block._id); }}
+                                  onMouseLeave={(e) => { e.stopPropagation(); setHoveredNodeId(null); }}
                                 >
                                   <div 
                                     className="tree-node"
@@ -883,7 +1177,15 @@ export default function CourseEditor({ courseId, user, onBack }) {
                                       {blockExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                                     </button>
                                     <span style={styles.nodeTitle}>{block.title || 'Block'}</span>
-                                    <div className="node-actions" style={styles.nodeActions}>
+                                    <div 
+                                      className="node-actions" 
+                                      style={{
+                                        ...styles.nodeActions,
+                                        opacity: hoveredNodeId === block._id ? 1 : 0,
+                                        pointerEvents: hoveredNodeId === block._id ? 'auto' : 'none',
+                                        transition: 'opacity 0.2s ease'
+                                      }}
+                                    >
                                       <button onClick={() => addComponent(block._id, 'text')} style={styles.addBtn} title="Add Text Component">
                                         <Plus size={12} />
                                       </button>
@@ -894,31 +1196,50 @@ export default function CourseEditor({ courseId, user, onBack }) {
                                   </div>
 
                                   {/* Components */}
-                                  {blockExpanded && blockComponents.map(comp => (
-                                    <div 
-                                      key={comp._id}
-                                      className="tree-node"
-                                      onClick={() => setSelectedItem({ type: 'component', data: comp })}
-                                      style={{
-                                        ...styles.treeNode,
-                                        ...styles.compNode,
-                                        ...(selectedItem?.data?._id === comp._id ? styles.selectedTreeNode : {})
-                                      }}
-                                      draggable
-                                      onDragStart={(e) => handleDragStart(e, 'component', comp._id, block._id)}
-                                      onDragOver={(e) => handleDragOver(e, 'component', block._id)}
-                                      onDrop={(e) => handleDrop(e, comp._id)}
-                                    >
-                                      <Square size={12} style={{color: 'var(--accent-color)'}} />
-                                      <span style={styles.nodeTitle}>{comp.title || 'Component'}</span>
-                                      <span style={styles.nodeTypeTag}>{comp._component}</span>
-                                      <div className="node-actions" style={styles.nodeActions}>
-                                        <button onClick={(e) => handleDeleteItem(e, 'component', comp._id)} style={styles.nodeDeleteBtn}>
-                                          <Trash2 size={12} />
-                                        </button>
+                                  {blockExpanded && blockComponents.map(comp => {
+                                    const compName = String(comp._component || '').toLowerCase();
+                                    let CompIcon = Square;
+                                    if (compName.includes('text')) CompIcon = FileText;
+                                    else if (compName.includes('graphic') || compName.includes('media') || compName.includes('image')) CompIcon = Image;
+                                    else if (compName.includes('video')) CompIcon = Video;
+                                    else if (compName.includes('mcq') || compName.includes('assessment') || compName.includes('quiz')) CompIcon = CheckSquare;
+
+                                    return (
+                                      <div 
+                                        key={comp._id}
+                                        className="tree-node"
+                                        onClick={() => setSelectedItem({ type: 'component', data: comp })}
+                                        style={{
+                                          ...styles.treeNode,
+                                          ...styles.compNode,
+                                          ...(selectedItem?.data?._id === comp._id ? styles.selectedTreeNode : {})
+                                        }}
+                                        draggable
+                                        onDragStart={(e) => handleDragStart(e, 'component', comp._id, block._id)}
+                                        onDragOver={(e) => handleDragOver(e, 'component', block._id)}
+                                        onDrop={(e) => handleDrop(e, comp._id)}
+                                        onMouseEnter={(e) => { e.stopPropagation(); setHoveredNodeId(comp._id); }}
+                                        onMouseLeave={(e) => { e.stopPropagation(); setHoveredNodeId(null); }}
+                                      >
+                                        <CompIcon size={12} style={{color: 'var(--accent-color)'}} />
+                                        <span style={styles.nodeTitle}>{comp.title || 'Component'}</span>
+                                        <span style={styles.nodeTypeTag}>{comp._component}</span>
+                                        <div 
+                                          className="node-actions" 
+                                          style={{
+                                            ...styles.nodeActions,
+                                            opacity: hoveredNodeId === comp._id ? 1 : 0,
+                                            pointerEvents: hoveredNodeId === comp._id ? 'auto' : 'none',
+                                            transition: 'opacity 0.2s ease'
+                                          }}
+                                        >
+                                          <button onClick={(e) => handleDeleteItem(e, 'component', comp._id)} style={styles.nodeDeleteBtn}>
+                                            <Trash2 size={12} />
+                                          </button>
+                                        </div>
                                       </div>
-                                    </div>
-                                  ))}
+                                    );
+                                  })}
                                 </div>
                               );
                             })}
@@ -1080,6 +1401,94 @@ export default function CourseEditor({ courseId, user, onBack }) {
           >
             右
           </button>
+
+          <div style={styles.toolbarDivider} />
+
+          {/* Up / Down Shifter Buttons */}
+          <button 
+            onClick={() => handleShiftSibling('up')}
+            style={styles.toolbarBtn}
+            title="Move Up"
+          >
+            ⬆️
+          </button>
+          <button 
+            onClick={() => handleShiftSibling('down')}
+            style={styles.toolbarBtn}
+            title="Move Down"
+          >
+            ⬇️
+          </button>
+
+          <div style={styles.toolbarDivider} />
+
+          {/* Text Color Swatch Popover */}
+          <div style={{ position: 'relative' }}>
+            <button 
+              onClick={() => {
+                setShowTextColorPopover(!showTextColorPopover);
+                setShowBgColorPopover(false);
+              }}
+              style={{
+                ...styles.toolbarBtn,
+                ...(showTextColorPopover ? styles.toolbarBtnActive : {})
+              }}
+              title="Text Color"
+            >
+              🎨T
+            </button>
+            {showTextColorPopover && (
+              <div style={styles.toolbarColorPopover}>
+                {['white', 'black', 'blue', 'purple', 'red'].map(c => (
+                  <button 
+                    key={c}
+                    onClick={() => {
+                      handleQuickStyleChange('textColor', c);
+                      setShowTextColorPopover(false);
+                    }}
+                    style={{
+                      ...styles.colorDotBtn,
+                      backgroundColor: c === 'white' ? '#fff' : c === 'black' ? '#000' : c === 'blue' ? '#3b82f6' : c === 'purple' ? '#a855f7' : '#ef4444'
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Background Color Swatch Popover */}
+          <div style={{ position: 'relative' }}>
+            <button 
+              onClick={() => {
+                setShowBgColorPopover(!showBgColorPopover);
+                setShowTextColorPopover(false);
+              }}
+              style={{
+                ...styles.toolbarBtn,
+                ...(showBgColorPopover ? styles.toolbarBtnActive : {})
+              }}
+              title="Container Background"
+            >
+              🎨B
+            </button>
+            {showBgColorPopover && (
+              <div style={styles.toolbarColorPopover}>
+                {['light', 'neutral', 'dark'].map(c => (
+                  <button 
+                    key={c}
+                    onClick={() => {
+                      handleQuickStyleChange('backgroundColor', c);
+                      setShowBgColorPopover(false);
+                    }}
+                    style={{
+                      ...styles.colorDotBtn,
+                      backgroundColor: c === 'light' ? '#f4f4f5' : c === 'neutral' ? '#71717a' : '#18181b'
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
 
           <div style={styles.toolbarDivider} />
 
@@ -1653,6 +2062,61 @@ const styles = {
     height: '16px',
     backgroundColor: '#27272a',
     margin: '0 4px',
+  },
+  rangeInput: {
+    width: '100%',
+    accentColor: 'var(--accent-color)',
+    cursor: 'pointer',
+    height: '6px',
+    borderRadius: '3px',
+    backgroundColor: 'var(--bg-tertiary)',
+    outline: 'none',
+  },
+  toolbarColorPopover: {
+    position: 'absolute',
+    bottom: '100%',
+    left: '50%',
+    transform: 'translateX(-50%) translateY(-8px)',
+    backgroundColor: '#18181b',
+    border: '1px solid #27272a',
+    borderRadius: '6px',
+    padding: '6px',
+    display: 'flex',
+    gap: '6px',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+    zIndex: 1010,
+  },
+  colorDotBtn: {
+    width: '16px',
+    height: '16px',
+    borderRadius: '50%',
+    border: '1px solid #3f3f46',
+    cursor: 'pointer',
+    padding: 0,
+    transition: 'transform 0.1s ease',
+  },
+  wysiwygToolbar: {
+    display: 'flex',
+    gap: '4px',
+    backgroundColor: 'var(--bg-tertiary)',
+    padding: '4px',
+    border: '1px solid var(--border-color)',
+    borderBottom: 'none',
+    borderTopLeftRadius: 'var(--border-radius-sm)',
+    borderTopRightRadius: 'var(--border-radius-sm)',
+  },
+  wysiwygBtn: {
+    padding: '4px 8px',
+    backgroundColor: 'transparent',
+    border: 'none',
+    borderRadius: '3px',
+    cursor: 'pointer',
+    color: 'var(--text-secondary)',
+    fontSize: '12px',
+    transition: 'var(--transition-smooth)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 };
 
